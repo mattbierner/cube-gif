@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import MedianRenderer from './median_renderer';
+import CubeGifRenderer from './3d_renderer';
 
 /**
  * Renders a median blended gif.
@@ -9,7 +9,7 @@ import MedianRenderer from './median_renderer';
 export default class GifRenderer extends React.Component {
     componentDidMount() {
         this._canvas = ReactDOM.findDOMNode(this);
-        this._renderer = new MedianRenderer(this._canvas);
+        this._renderer = new CubeGifRenderer(this._canvas);
         
         if (this.props.imageData) {
             this._renderer.setGif(this.props.imageData, this.props);

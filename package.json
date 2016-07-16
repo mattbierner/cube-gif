@@ -1,19 +1,19 @@
 {
-  "name": "median.gif",
+  "name": "cube.gif",
   "version": "0.0.0",
-  "description": "Median blending gifs",
+  "description": "cube blending gifs",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mattbierner/median-gif.git"
+    "url": "git+https://github.com/mattbierner/cube-gif.git"
   },
   "keywords": [],
   "author": "Matt Bierner (http://mattbierner.com/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mattbierner/median-gif/issues"
+    "url": "https://github.com/mattbierner/cube-gif/issues"
   },
-  "homepage": "https://mattbierner.github.io/median-gif",
+  "homepage": "https://mattbierner.github.io/cube-gif",
   "devDependencies": {
     "babel": "^5.6.23",
     "babel-core": "^6.8.0",

@@ -28474,11 +28474,11 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _load_gif = __webpack_require__(231);
+	var _load_gif = __webpack_require__(209);
 
 	var _load_gif2 = _interopRequireDefault(_load_gif);
 
-	var _gif_renderer = __webpack_require__(215);
+	var _gif_renderer = __webpack_require__(212);
 
 	var _gif_renderer2 = _interopRequireDefault(_gif_renderer);
 
@@ -28568,8 +28568,128 @@
 	exports.default = Viewer;
 
 /***/ },
-/* 209 */,
+/* 209 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _create_image_data = __webpack_require__(210);
+
+	var _create_image_data2 = _interopRequireDefault(_create_image_data);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var omggif = __webpack_require__(211);
+
+
+	/**
+	 * Get a file as binary data.
+	 */
+	var loadBinaryData = function loadBinaryData(url) {
+	    var xhr = new XMLHttpRequest();
+	    xhr.open("GET", url, true);
+	    xhr.responseType = "arraybuffer";
+
+	    var p = new Promise(function (resolve, reject) {
+	        xhr.onload = function () {
+	            if (xhr.status !== 200) return reject('Could not load: ' + url);
+	            var arrayBuffer = xhr.response;
+	            resolve(new Uint8Array(arrayBuffer));
+	        };
+	    });
+	    xhr.send(null);
+	    return p;
+	};
+
+	/**
+	 * Extract metadata and frames from binary gif data.
+	 */
+	var decodeGif = function decodeGif(byteArray) {
+	    var gr = new omggif.GifReader(byteArray);
+	    return {
+	        width: gr.width,
+	        height: gr.height,
+	        frames: extractGifFrameData(gr)
+	    };
+	};
+
+	/**
+	 * Extract each frame of metadata / frame data  from a gif.
+	 */
+	var extractGifFrameData = function extractGifFrameData(reader) {
+	    var frames = [];
+	    var width = reader.width;
+	    var height = reader.height;
+
+
+	    var previousImageData = void 0;
+	    for (var i = 0, len = reader.numFrames(); i < len; ++i) {
+	        var info = reader.frameInfo(i);
+	        var imageData = (0, _create_image_data2.default)(width, height);
+	        if (previousImageData) {
+	            for (var _i = 0, _len = previousImageData.data.length; _i < _len; ++_i) {
+	                imageData.data[_i] = previousImageData.data[_i];
+	            }
+	        }
+
+	        reader.decodeAndBlitFrameRGBA(i, imageData.data);
+	        frames.push({ info: info, data: imageData });
+	        previousImageData = imageData;
+	    }
+	    return frames;
+	};
+
+	/**
+	 * Load and decode a gif.
+	 */
+
+	exports.default = function (url) {
+	    return loadBinaryData(url).then(decodeGif);
+	};
+
+/***/ },
 /* 210 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	/**
+	 * Handle IE not supporting new ImageData()
+	 */
+
+	exports.default = function () {
+	    try {
+	        new ImageData(1, 1);
+	        return function (width, height) {
+	            return new ImageData(width, height);
+	        };
+	    } catch (e) {
+	        var _ret = function () {
+	            var canvas = document.createElement("canvas");
+	            var ctx = canvas.getContext('2d');
+	            return {
+	                v: function v(width, height) {
+	                    return ctx.createImageData(width, height);
+	                }
+	            };
+	        }();
+
+	        if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
+	    }
+	}();
+
+/***/ },
+/* 211 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -29366,11 +29486,7 @@
 	} catch (e) {} // CommonJS.
 
 /***/ },
-/* 211 */,
-/* 212 */,
-/* 213 */,
-/* 214 */,
-/* 215 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29389,9 +29505,9 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _median_renderer = __webpack_require__(216);
+	var _d_renderer = __webpack_require__(213);
 
-	var _median_renderer2 = _interopRequireDefault(_median_renderer);
+	var _d_renderer2 = _interopRequireDefault(_d_renderer);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29418,7 +29534,7 @@
 	        key: 'componentDidMount',
 	        value: function componentDidMount() {
 	            this._canvas = _reactDom2.default.findDOMNode(this);
-	            this._renderer = new _median_renderer2.default(this._canvas);
+	            this._renderer = new _d_renderer2.default(this._canvas);
 
 	            if (this.props.imageData) {
 	                this._renderer.setGif(this.props.imageData, this.props);
@@ -29449,7 +29565,7 @@
 	;
 
 /***/ },
-/* 216 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29460,19 +29576,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _three = __webpack_require__(217);
+	var _three = __webpack_require__(214);
 
 	var _three2 = _interopRequireDefault(_three);
 
-	var _OrbitControls = __webpack_require__(218);
+	var _OrbitControls = __webpack_require__(215);
 
 	var _OrbitControls2 = _interopRequireDefault(_OrbitControls);
 
-	var _gen_array = __webpack_require__(219);
+	var _gen_array = __webpack_require__(216);
 
 	var _gen_array2 = _interopRequireDefault(_gen_array);
 
-	var _create_image_data = __webpack_require__(220);
+	var _create_image_data = __webpack_require__(210);
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
@@ -29480,11 +29596,30 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var MedianRenderer = function () {
-	    function MedianRenderer(canvas) {
+	var createPlane = function createPlane(name, a, b, c, d, mat) {
+	    var indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
+
+	    var vertices = new Float32Array([a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z]);
+
+	    var uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]);
+
+	    var geometry = new _three2.default.BufferGeometry();
+
+	    geometry.addAttribute('position', new _three2.default.BufferAttribute(vertices, 3));
+	    geometry.addAttribute('uv', new _three2.default.BufferAttribute(uv, 2));
+
+	    geometry.setIndex(new _three2.default.BufferAttribute(indices, 1));
+
+	    var mesh = new _three2.default.Mesh(geometry, mat);
+	    mesh.name = name;
+	    return mesh;
+	};
+
+	var CubeRenderer = function () {
+	    function CubeRenderer(canvas) {
 	        var _this = this;
 
-	        _classCallCheck(this, MedianRenderer);
+	        _classCallCheck(this, CubeRenderer);
 
 	        this._frames = [];
 	        this._options = {};
@@ -29494,8 +29629,9 @@
 	        this.initRenderer(canvas);
 	        this.initCamera();
 	        this.initControls(canvas);
-
 	        this.resize(500, 500);
+
+	        this.initGeometry();
 
 	        this.animate = function () {
 	            return _this.animateImpl();
@@ -29503,7 +29639,7 @@
 	        this.animateImpl();
 	    }
 
-	    _createClass(MedianRenderer, [{
+	    _createClass(CubeRenderer, [{
 	        key: 'initRenderer',
 	        value: function initRenderer(canvas) {
 	            this._renderer = new _three2.default.WebGLRenderer({
@@ -29516,7 +29652,7 @@
 	        key: 'initCamera',
 	        value: function initCamera(width, height) {
 	            this._camera = new _three2.default.PerspectiveCamera(75, 0.5, 0.01, 800);
-	            this._camera.position.z = 2;
+	            this._camera.position.z = 5;
 	        }
 	    }, {
 	        key: 'initControls',
@@ -29536,6 +29672,15 @@
 
 	            this._renderer.setSize(width, height);
 	        }
+	    }, {
+	        key: 'initGeometry',
+	        value: function initGeometry() {
+	            var geometry = new _three2.default.PlaneGeometry(2, 2, 1);
+	            var material = new _three2.default.MeshBasicMaterial({ color: 0xff0000, side: _three2.default.DoubleSide, transparent: true, opacity: 0.5 });
+	            this._plane = new _three2.default.Mesh(geometry, material);
+	            this._plane.name = 'plane';
+	            this._scene.add(this._plane);
+	        }
 
 	        /**
 	         * Remove all objects from the current scene.
@@ -29544,78 +29689,94 @@
 	    }, {
 	        key: 'clear',
 	        value: function clear() {
-	            for (var i = this._scene.children.length - 1; i >= 0; --i) {
-	                var obj = this._scene.children[i];
-	                if (obj !== this._camera) this._scene.remove(obj);
+	            var targets = ['left', 'right', 'top', 'bottom', 'front', 'back'];
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = targets[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var name = _step.value;
+
+	                    var obj = this._scene.getObjectByName(name);
+	                    this._scene.remove(obj);
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
 	            }
 	        }
 	    }, {
-	        key: 'createPlane',
-	        value: function createPlane(a, b, c, d, mat) {
-	            var indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
+	        key: 'slice',
+	        value: function slice(imageData) {
+	            var plane = this._scene.getObjectByName('plane');
 
-	            var vertices = new Float32Array([a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z]);
+	            var vertices = plane.geometry.vertices;
 
-	            var uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]);
+	            var p1 = vertices[0];
+	            var p2 = vertices[1];
+	            var p3 = vertices[2];
 
-	            var geometry = new _three2.default.BufferGeometry();
+	            var l = 10;
 
-	            geometry.addAttribute('position', new _three2.default.BufferAttribute(vertices, 3));
-	            geometry.addAttribute('uv', new _three2.default.BufferAttribute(uv, 2));
+	            var dx = p2.clone().sub(p1).divideScalar(l);
+	            var dy = p3.clone().sub(p1).divideScalar(l);
 
-	            geometry.setIndex(new _three2.default.BufferAttribute(indices, 1));
+	            var sampledData = (0, _create_image_data2.default)(l, l);
 
-	            return new _three2.default.Mesh(geometry, mat);
+	            var start = p1.clone().add(dy.clone().divideScalar(2));
+	            for (var y = 0; y < l; ++y) {
+	                var startRow = start.clone().add(dx.clone().divideScalar(2));
+	                for (var x = 0; x < l; ++x) {
+	                    var p = startRow;
+	                    console.log(p.x, p.y, p.z);
+	                    this.copyRgba(sampledData.data, x + y * l, [x * 25, y * 25, 0, 1], 0);
+	                    startRow.add(dx);
+	                }
+	                start.add(dy);
+	            }
+
+	            var text = this.texFromFrame(sampledData);
+	            var mat = new _three2.default.MeshBasicMaterial({ map: text });
+
+	            plane.material = mat;
 	        }
 	    }, {
 	        key: 'setGif',
 	        value: function setGif(imageData, options) {
 	            this.clear();
+	            this._data = imageData;
 
-	            var w = 0.5;
-	            var h = 0.5;
+	            var scale = Math.max(imageData.width, imageData.height);
+
+	            var w = imageData.width / scale / 2;
+	            var h = imageData.height / scale / 2;
 	            var d = 0.5;
 	            var faces = this._getFaceImages(imageData);
 
-	            {
-	                // front
-	                var mat = faces.front;
-	                var plane = this.createPlane(new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), mat);
-	                this._scene.add(plane);
-	            }
-	            {
-	                // right
-	                var _mat = faces.right;
-	                var _plane = this.createPlane(new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), _mat);
-	                this._scene.add(_plane);
-	            }
-	            {
-	                // back
-	                var _mat2 = faces.back;
-	                var _plane2 = this.createPlane(new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(-w, h, -d), _mat2);
-	                this._scene.add(_plane2);
-	            }
+	            this._scene.add(createPlane('front', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.front));
 
-	            {
-	                // left
-	                var _mat3 = faces.left;
-	                var _plane3 = this.createPlane(new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(-w, h, d), _mat3);
-	                this._scene.add(_plane3);
-	            }
+	            this._scene.add(createPlane('right', new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), faces.right));
 
-	            {
-	                // top
-	                var _mat4 = faces.top;
-	                var _plane4 = this.createPlane(new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), _mat4);
-	                this._scene.add(_plane4);
-	            }
+	            this._scene.add(createPlane('back', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(-w, h, -d), faces.back));
 
-	            {
-	                // bottom
-	                var _mat5 = faces.bottom;
-	                var _plane5 = this.createPlane(new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(-w, -h, d), _mat5);
-	                this._scene.add(_plane5);
-	            }
+	            this._scene.add(createPlane('left', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(-w, h, d), faces.left));
+
+	            this._scene.add(createPlane('top', new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.top));
+
+	            this._scene.add(createPlane('bottom', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(-w, -h, d), faces.bottom));
+
+	            this.slice(imageData);
 	        }
 	    }, {
 	        key: 'texFromFrame',
@@ -29754,13 +29915,13 @@
 	        }
 	    }]);
 
-	    return MedianRenderer;
+	    return CubeRenderer;
 	}();
 
-	exports.default = MedianRenderer;
+	exports.default = CubeRenderer;
 
 /***/ },
-/* 217 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;'use strict';// File:src/Three.js
@@ -33047,7 +33208,7 @@
 	var numFrames=this.geometry.morphTargets.length;var name="__default";var startFrame=0;var endFrame=numFrames-1;var fps=numFrames/1;this.createAnimation(name,startFrame,endFrame,fps);this.setAnimationWeight(name,1);};THREE.MorphBlendMesh.prototype=Object.create(THREE.Mesh.prototype);THREE.MorphBlendMesh.prototype.constructor=THREE.MorphBlendMesh;THREE.MorphBlendMesh.prototype.createAnimation=function(name,start,end,fps){var animation={start:start,end:end,length:end-start+1,fps:fps,duration:(end-start)/fps,lastFrame:0,currentFrame:0,active:false,time:0,direction:1,weight:1,directionBackwards:false,mirroredLoop:false};this.animationsMap[name]=animation;this.animationsList.push(animation);};THREE.MorphBlendMesh.prototype.autoCreateAnimations=function(fps){var pattern=/([a-z]+)_?(\d+)/i;var firstAnimation,frameRanges={};var geometry=this.geometry;for(var i=0,il=geometry.morphTargets.length;i<il;i++){var morph=geometry.morphTargets[i];var chunks=morph.name.match(pattern);if(chunks&&chunks.length>1){var name=chunks[1];if(!frameRanges[name])frameRanges[name]={start:Infinity,end:-Infinity};var range=frameRanges[name];if(i<range.start)range.start=i;if(i>range.end)range.end=i;if(!firstAnimation)firstAnimation=name;}}for(var name in frameRanges){var range=frameRanges[name];this.createAnimation(name,range.start,range.end,fps);}this.firstAnimation=firstAnimation;};THREE.MorphBlendMesh.prototype.setAnimationDirectionForward=function(name){var animation=this.animationsMap[name];if(animation){animation.direction=1;animation.directionBackwards=false;}};THREE.MorphBlendMesh.prototype.setAnimationDirectionBackward=function(name){var animation=this.animationsMap[name];if(animation){animation.direction=-1;animation.directionBackwards=true;}};THREE.MorphBlendMesh.prototype.setAnimationFPS=function(name,fps){var animation=this.animationsMap[name];if(animation){animation.fps=fps;animation.duration=(animation.end-animation.start)/animation.fps;}};THREE.MorphBlendMesh.prototype.setAnimationDuration=function(name,duration){var animation=this.animationsMap[name];if(animation){animation.duration=duration;animation.fps=(animation.end-animation.start)/animation.duration;}};THREE.MorphBlendMesh.prototype.setAnimationWeight=function(name,weight){var animation=this.animationsMap[name];if(animation){animation.weight=weight;}};THREE.MorphBlendMesh.prototype.setAnimationTime=function(name,time){var animation=this.animationsMap[name];if(animation){animation.time=time;}};THREE.MorphBlendMesh.prototype.getAnimationTime=function(name){var time=0;var animation=this.animationsMap[name];if(animation){time=animation.time;}return time;};THREE.MorphBlendMesh.prototype.getAnimationDuration=function(name){var duration=-1;var animation=this.animationsMap[name];if(animation){duration=animation.duration;}return duration;};THREE.MorphBlendMesh.prototype.playAnimation=function(name){var animation=this.animationsMap[name];if(animation){animation.time=0;animation.active=true;}else{console.warn("THREE.MorphBlendMesh: animation["+name+"] undefined in .playAnimation()");}};THREE.MorphBlendMesh.prototype.stopAnimation=function(name){var animation=this.animationsMap[name];if(animation){animation.active=false;}};THREE.MorphBlendMesh.prototype.update=function(delta){for(var i=0,il=this.animationsList.length;i<il;i++){var animation=this.animationsList[i];if(!animation.active)continue;var frameTime=animation.duration/animation.length;animation.time+=animation.direction*delta;if(animation.mirroredLoop){if(animation.time>animation.duration||animation.time<0){animation.direction*=-1;if(animation.time>animation.duration){animation.time=animation.duration;animation.directionBackwards=true;}if(animation.time<0){animation.time=0;animation.directionBackwards=false;}}}else{animation.time=animation.time%animation.duration;if(animation.time<0)animation.time+=animation.duration;}var keyframe=animation.start+THREE.Math.clamp(Math.floor(animation.time/frameTime),0,animation.length-1);var weight=animation.weight;if(keyframe!==animation.currentFrame){this.morphTargetInfluences[animation.lastFrame]=0;this.morphTargetInfluences[animation.currentFrame]=1*weight;this.morphTargetInfluences[keyframe]=0;animation.lastFrame=animation.currentFrame;animation.currentFrame=keyframe;}var mix=animation.time%frameTime/frameTime;if(animation.directionBackwards)mix=1-mix;if(animation.currentFrame!==animation.lastFrame){this.morphTargetInfluences[animation.currentFrame]=mix*weight;this.morphTargetInfluences[animation.lastFrame]=(1-mix)*weight;}else{this.morphTargetInfluences[animation.currentFrame]=weight;}}};
 
 /***/ },
-/* 218 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33056,7 +33217,7 @@
 		value: true
 	});
 
-	var _three = __webpack_require__(217);
+	var _three = __webpack_require__(214);
 
 	var _three2 = _interopRequireDefault(_three);
 
@@ -34018,7 +34179,7 @@
 	});
 
 /***/ },
-/* 219 */
+/* 216 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -34036,137 +34197,6 @@
 	        out.push(x);
 	    }
 	    return out;
-	};
-
-/***/ },
-/* 220 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-	/**
-	 * Handle IE not supporting new ImageData()
-	 */
-
-	exports.default = function () {
-	    try {
-	        new ImageData(1, 1);
-	        return function (width, height) {
-	            return new ImageData(width, height);
-	        };
-	    } catch (e) {
-	        var _ret = function () {
-	            var canvas = document.createElement("canvas");
-	            var ctx = canvas.getContext('2d');
-	            return {
-	                v: function v(width, height) {
-	                    return ctx.createImageData(width, height);
-	                }
-	            };
-	        }();
-
-	        if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
-	    }
-	}();
-
-/***/ },
-/* 221 */,
-/* 222 */,
-/* 223 */,
-/* 224 */,
-/* 225 */,
-/* 226 */,
-/* 227 */,
-/* 228 */,
-/* 229 */,
-/* 230 */,
-/* 231 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _create_image_data = __webpack_require__(220);
-
-	var _create_image_data2 = _interopRequireDefault(_create_image_data);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var omggif = __webpack_require__(210);
-
-
-	/**
-	 * Get a file as binary data.
-	 */
-	var loadBinaryData = function loadBinaryData(url) {
-	    var xhr = new XMLHttpRequest();
-	    xhr.open("GET", url, true);
-	    xhr.responseType = "arraybuffer";
-
-	    var p = new Promise(function (resolve, reject) {
-	        xhr.onload = function () {
-	            if (xhr.status !== 200) return reject('Could not load: ' + url);
-	            var arrayBuffer = xhr.response;
-	            resolve(new Uint8Array(arrayBuffer));
-	        };
-	    });
-	    xhr.send(null);
-	    return p;
-	};
-
-	/**
-	 * Extract metadata and frames from binary gif data.
-	 */
-	var decodeGif = function decodeGif(byteArray) {
-	    var gr = new omggif.GifReader(byteArray);
-	    return {
-	        width: gr.width,
-	        height: gr.height,
-	        frames: extractGifFrameData(gr)
-	    };
-	};
-
-	/**
-	 * Extract each frame of metadata / frame data  from a gif.
-	 */
-	var extractGifFrameData = function extractGifFrameData(reader) {
-	    var frames = [];
-	    var width = reader.width;
-	    var height = reader.height;
-
-
-	    var previousImageData = void 0;
-	    for (var i = 0, len = reader.numFrames(); i < len; ++i) {
-	        var info = reader.frameInfo(i);
-	        var imageData = (0, _create_image_data2.default)(width, height);
-	        if (previousImageData) {
-	            for (var _i = 0, _len = previousImageData.data.length; _i < _len; ++_i) {
-	                imageData.data[_i] = previousImageData.data[_i];
-	            }
-	        }
-
-	        reader.decodeAndBlitFrameRGBA(i, imageData.data);
-	        frames.push({ info: info, data: imageData });
-	        previousImageData = imageData;
-	    }
-	    return frames;
-	};
-
-	/**
-	 * Load and decode a gif.
-	 */
-
-	exports.default = function (url) {
-	    return loadBinaryData(url).then(decodeGif);
 	};
 
 /***/ }

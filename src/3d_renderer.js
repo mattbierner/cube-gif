@@ -4,6 +4,35 @@ import OrbitControls from './OrbitControls';
 import gen_array from './gen_array';
 import createImageData from './create_image_data';
 
+const createPlane = (name, a, b, c, d, mat) => {
+    const indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
+
+    const vertices = new Float32Array([
+        a.x, a.y, a.z,
+        b.x, b.y, b.z,
+        c.x, c.y, c.z,
+        d.x, d.y, d.z
+    ]);
+
+    const uv = new Float32Array([
+        0, 0,
+        1, 0,
+        1, 1,
+        0, 1
+    ]);
+
+    const geometry = new THREE.BufferGeometry();
+
+    geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.addAttribute('uv', new THREE.BufferAttribute(uv, 2));
+
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+    const mesh = new THREE.Mesh(geometry, mat);
+    mesh.name = name;
+    return mesh;
+};
+
 export default class CubeRenderer {
     constructor(canvas) {
         this._frames = [];
@@ -14,8 +43,9 @@ export default class CubeRenderer {
         this.initRenderer(canvas);
         this.initCamera();
         this.initControls(canvas);
-
         this.resize(500, 500);
+
+        this.initGeometry();
 
         this.animate = () => this.animateImpl();
         this.animateImpl();
@@ -31,7 +61,7 @@ export default class CubeRenderer {
 
     initCamera(width, height) {
         this._camera = new THREE.PerspectiveCamera(75, 0.5, 0.01, 800);
-        this._camera.position.z = 2;
+        this._camera.position.z = 5;
     }
 
     initControls(container) {
@@ -50,83 +80,101 @@ export default class CubeRenderer {
         this._renderer.setSize(width, height);
     }
 
+    initGeometry() {
+        const geometry = new THREE.PlaneGeometry(2, 2, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+        this._plane = new THREE.Mesh(geometry, material);
+        this._plane.name = 'plane';
+        this._scene.add(this._plane);
+    }
+
     /**
      * Remove all objects from the current scene.
      */
     clear() {
-        for (let i = this._scene.children.length - 1; i >= 0; --i) {
-            const obj = this._scene.children[i];
-            if (obj !== this._camera)
-                this._scene.remove(obj);
+        const targets = ['left', 'right', 'top', 'bottom', 'front', 'back'];
+        for (const name of targets) {
+            const obj = this._scene.getObjectByName(name);
+            this._scene.remove(obj);
         }
     }
 
-    createPlane(name, a, b, c, d, mat) {
-        const indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
+    slice(imageData) {
+        const plane = this._scene.getObjectByName('plane');
 
-        const vertices = new Float32Array([
-            a.x, a.y, a.z,
-            b.x, b.y, b.z,
-            c.x, c.y, c.z,
-            d.x, d.y, d.z
-        ]);
+        const vertices = plane.geometry.vertices;
 
-        const uv = new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 1
-        ]);
+        const p1 = vertices[0];
+        const p2 = vertices[1];
+        const p3 = vertices[2];
 
-        const geometry = new THREE.BufferGeometry();
+        const l = 10;
 
-        geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        geometry.addAttribute('uv', new THREE.BufferAttribute(uv, 2));
+        const dx = p2.clone().sub(p1).divideScalar(l);
+        const dy = p3.clone().sub(p1).divideScalar(l);
 
-        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        const sampledData = createImageData(l, l);
 
-        const mesh = new THREE.Mesh(geometry, mat);
-        mesh.name = name;
-        return mesh;
+        let start = p1.clone().add(dy.clone().divideScalar(2));
+        for (let y = 0 ; y < l; ++y) {
+            const startRow = start.clone().add(dx.clone().divideScalar(2));
+            for (let x = 0 ; x < l; ++x) {
+                const p = startRow;
+                console.log(p.x, p.y, p.z);
+                this.copyRgba(sampledData.data, x + y * l, [x * 25, y * 25, 0, 1], 0);
+                startRow.add(dx);
+            }
+            start.add(dy);
+        }
+
+        const text = this.texFromFrame(sampledData);
+        const mat = new THREE.MeshBasicMaterial({ map: text });
+
+        plane.material = mat;
     }
 
     setGif(imageData, options) {
         this.clear();
+        this._data = imageData;
 
-        const w = 0.5
-        const h = 0.5;
+        const scale = Math.max(imageData.width, imageData.height);
+
+        const w = imageData.width / scale / 2;
+        const h = imageData.height / scale / 2;
         const d = 0.5;
         const faces = this._getFaceImages(imageData);
 
         this._scene.add(
-            this.createPlane('front',
+            createPlane('front',
                 new THREE.Vector3(-w, -h, d), new THREE.Vector3(w, -h, d), new THREE.Vector3(w, h, d), new THREE.Vector3(-w, h, d),
                 faces.front));
 
         this._scene.add(
-            this.createPlane('right',
+            createPlane('right',
                 new THREE.Vector3(w, -h, d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(w, h, d),
                 faces.right));
 
         this._scene.add(
-            this.createPlane('back',
+            createPlane('back',
                 new THREE.Vector3(-w, -h, -d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(-w, h, -d),
                 faces.back));
 
         this._scene.add(
-            this.createPlane('left',
+            createPlane('left',
                 new THREE.Vector3(-w, -h, d), new THREE.Vector3(-w, -h, -d), new THREE.Vector3(-w, h, -d), new THREE.Vector3(-w, h, d),
                 faces.left));
-        
+
         this._scene.add(
-            this.createPlane('top',
+            createPlane('top',
                 new THREE.Vector3(-w, h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(w, h, d), new THREE.Vector3(-w, h, d),
                 faces.top));
 
         this._scene.add(
-            this.createPlane('bottom',
+            createPlane('bottom',
                 new THREE.Vector3(-w, -h, -d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, -h, d), new THREE.Vector3(-w, -h, d),
                 faces.bottom));
+
+        this.slice(imageData)
     }
 
     texFromFrame(frame) {
@@ -173,7 +221,6 @@ export default class CubeRenderer {
         }
         return data;
     }
-
 
     _frontImage(imageData) {
         return imageData.frames[0].data;
@@ -236,6 +283,9 @@ export default class CubeRenderer {
             return out;
         }, {});
     }
+
+
+
 
 
     animateImpl() {
