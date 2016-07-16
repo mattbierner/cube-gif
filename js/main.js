@@ -29602,6 +29602,14 @@
 
 	var _OrbitControls2 = _interopRequireDefault(_OrbitControls);
 
+	var _TransformControls = __webpack_require__(218);
+
+	var _TransformControls2 = _interopRequireDefault(_TransformControls);
+
+	var _lodash = __webpack_require__(221);
+
+	var _lodash2 = _interopRequireDefault(_lodash);
+
 	var _gen_array = __webpack_require__(216);
 
 	var _gen_array2 = _interopRequireDefault(_gen_array);
@@ -29658,6 +29666,7 @@
 	        this._delegate = delegate;
 
 	        this._scene = new _three2.default.Scene();
+	        this._uiScene = new _three2.default.Scene();
 
 	        this.initRenderer(canvas);
 	        this.initCamera();
@@ -29676,9 +29685,10 @@
 	        key: 'initRenderer',
 	        value: function initRenderer(canvas) {
 	            this._renderer = new _three2.default.WebGLRenderer({
-	                canvas: canvas
+	                canvas: canvas,
+	                alpha: true
 	            });
-	            this._renderer.localClippingEnabled = true;
+	            this._renderer.autoClear = false;
 	            this._renderer.setClearColor(0xffffff, 0);
 	            this._renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
 	        }
@@ -29691,10 +29701,40 @@
 	    }, {
 	        key: 'initControls',
 	        value: function initControls(container) {
+	            var _this2 = this;
+
 	            this._controls = new _OrbitControls2.default(this._camera, container);
 	            this._controls.enableDamping = true;
 	            this._controls.dampingFactor = 0.25;
 	            this._controls.enableZoom = true;
+
+	            // Create transform controls
+	            this._transformControls = new _TransformControls2.default(this._camera, container);
+	            this._transformControls.setSize(0.50);
+	            this._uiScene.add(this._transformControls);
+
+	            window.addEventListener('keydown', function (event) {
+	                switch (event.keyCode) {
+	                    case 87:
+	                        // W
+	                        _this2._transformControls.setMode("translate");
+	                        break;
+
+	                    case 69:
+	                        // E
+	                        _this2._transformControls.setMode("rotate");
+	                        break;
+
+	                    case 82:
+	                        // R
+	                        _this2._transformControls.setMode("scale");
+	                        break;
+	                }
+	            });
+
+	            this._transformControls.addEventListener('change', function () {
+	                _this2._needsSlice = true;
+	            });
 	        }
 	    }, {
 	        key: 'resize',
@@ -29713,7 +29753,6 @@
 	                side: _three2.default.DoubleSide,
 	                map: new _three2.default.Texture(),
 	                transparent: true,
-	                opacity: 1,
 	                alphaTest: 0.5
 	            });
 
@@ -29724,8 +29763,10 @@
 	            this._plane.geometry.attributes.uv.needsUpdate = true;
 	            this._scene.add(this._plane);
 
-	            var edges = new _three2.default.EdgesHelper(this._plane, '#ffffff');
+	            var edges = new _three2.default.EdgesHelper(this._plane, '#333333');
 	            this._scene.add(edges);
+
+	            this._transformControls.attach(this._plane);
 	        }
 
 	        /**
@@ -29867,7 +29908,7 @@
 	                for (var _iterator = this._cube.children.slice()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	                    var child = _step.value;
 
-	                    var edges = new _three2.default.EdgesHelper(child, '#777777');
+	                    var edges = new _three2.default.EdgesHelper(child, '#cccccc');
 	                    this._cube.add(edges);
 	                }
 	            } catch (err) {
@@ -29891,6 +29932,7 @@
 	        key: 'texFromFrame',
 	        value: function texFromFrame(frame) {
 	            var text = new _three2.default.Texture(frame);
+	            text.minFilter = _three2.default.NearestFilter;
 	            text.needsUpdate = true;
 	            return text;
 	        }
@@ -29927,7 +29969,6 @@
 	        key: 'sampleDataTop',
 	        value: function sampleDataTop(imageData, f) {
 	            var data = (0, _create_image_data2.default)(imageData.width, imageData.height);
-
 	            for (var y = 0; y < imageData.height; ++y) {
 	                var frameIndex = Math.floor(y / imageData.height * imageData.frames.length);
 	                var frame = imageData.frames[frameIndex];
@@ -29945,10 +29986,10 @@
 	    }, {
 	        key: '_rightImage',
 	        value: function _rightImage(imageData) {
-	            var _this2 = this;
+	            var _this3 = this;
 
 	            return this.sampleData(imageData, function (data, frame, x, y) {
-	                return _this2.copyRgba(data.data, y * imageData.width + x, frame.data.data, y * imageData.width + (imageData.width - 1));
+	                return _this3.copyRgba(data.data, y * imageData.width + x, frame.data.data, y * imageData.width + (imageData.width - 1));
 	            });
 	        }
 	    }, {
@@ -29959,34 +30000,34 @@
 	    }, {
 	        key: '_leftImage',
 	        value: function _leftImage(imageData) {
-	            var _this3 = this;
+	            var _this4 = this;
 
 	            return this.sampleData(imageData, function (data, frame, x, y) {
-	                return _this3.copyRgba(data.data, y * imageData.width + x, frame.data.data, y * imageData.width + 0);
+	                return _this4.copyRgba(data.data, y * imageData.width + x, frame.data.data, y * imageData.width + 0);
 	            });
 	        }
 	    }, {
 	        key: '_topImage',
 	        value: function _topImage(imageData) {
-	            var _this4 = this;
+	            var _this5 = this;
 
 	            return this.sampleDataTop(imageData, function (data, frame, x, y) {
-	                return _this4.copyRgba(data.data, y * imageData.width + x, frame.data.data, x);
+	                return _this5.copyRgba(data.data, y * imageData.width + x, frame.data.data, x);
 	            });
 	        }
 	    }, {
 	        key: '_bottomImage',
 	        value: function _bottomImage(imageData) {
-	            var _this5 = this;
+	            var _this6 = this;
 
 	            return this.sampleDataTop(imageData, function (data, frame, x, y) {
-	                return _this5.copyRgba(data.data, y * imageData.width + x, frame.data.data, x + (imageData.height - 1) * imageData.width);
+	                return _this6.copyRgba(data.data, y * imageData.width + x, frame.data.data, x + (imageData.height - 1) * imageData.width);
 	            });
 	        }
 	    }, {
 	        key: '_getFaceImages',
 	        value: function _getFaceImages(imageData) {
-	            var _this6 = this;
+	            var _this7 = this;
 
 	            var images = {
 	                front: this._frontImage(imageData),
@@ -29999,7 +30040,7 @@
 
 	            return Object.keys(images).reduce(function (out, name) {
 	                var mat = cubeMaterial.clone();
-	                mat.uniforms.tDiffuse.value = _this6.texFromFrame(images[name]);
+	                mat.uniforms.tDiffuse.value = _this7.texFromFrame(images[name]);
 	                mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
 	                out[name] = mat;
 	                return out;
@@ -30013,6 +30054,8 @@
 	    }, {
 	        key: 'animateImpl',
 	        value: function animateImpl() {
+	            var _this8 = this;
+
 	            requestAnimationFrame(this.animate);
 
 	            this.update();
@@ -30021,12 +30064,20 @@
 	            //  this._plane.rotateZ(0.002);
 	            // this._plane.rotateY(0.002);
 
-	            this.slice(this._data);
+	            this._slicer = this._slicer || (0, _lodash2.default)(function () {
+	                return _this8.slice(_this8._data);
+	            }, 50);
+
+	            if (this._needsSlice) {
+	                this._slicer(this._data);
+	                this._needsSlice = false;
+	            }
 	        }
 	    }, {
 	        key: 'update',
 	        value: function update() {
 	            this._controls.update();
+	            this._transformControls.update();
 
 	            if (!this._cube) return;
 
@@ -30035,7 +30086,7 @@
 	            cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
 	            cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
 	            cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
-	            cubeMaterial.uniforms.clippingPlane.value.w = clippingPlane.constant;
+	            cubeMaterial.uniforms.clippingPlane.value.w = -clippingPlane.constant;
 	            cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
 	        }
 
@@ -30046,7 +30097,10 @@
 	    }, {
 	        key: 'render',
 	        value: function render() {
+	            this._renderer.clear();
 	            this._renderer.render(this._scene, this._camera);
+	            this._renderer.clearDepth();
+	            this._renderer.render(this._uiScene, this._camera);
 	        }
 	    }]);
 
@@ -34360,6 +34414,1520 @@
 	    side: _three2.default.DoubleSide,
 	    transparent: true
 	};
+
+/***/ },
+/* 218 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _three = __webpack_require__(214);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = function () {
+
+		'use strict';
+
+		var GizmoMaterial = function GizmoMaterial(parameters) {
+
+			_three2.default.MeshBasicMaterial.call(this);
+
+			this.depthTest = false;
+			this.depthWrite = false;
+			this.side = _three2.default.FrontSide;
+			this.transparent = true;
+
+			this.setValues(parameters);
+
+			this.oldColor = this.color.clone();
+			this.oldOpacity = this.opacity;
+
+			this.highlight = function (highlighted) {
+
+				if (highlighted) {
+
+					this.color.setRGB(1, 1, 0);
+					this.opacity = 1;
+				} else {
+
+					this.color.copy(this.oldColor);
+					this.opacity = this.oldOpacity;
+				}
+			};
+		};
+
+		GizmoMaterial.prototype = Object.create(_three2.default.MeshBasicMaterial.prototype);
+		GizmoMaterial.prototype.constructor = GizmoMaterial;
+
+		var GizmoLineMaterial = function GizmoLineMaterial(parameters) {
+
+			_three2.default.LineBasicMaterial.call(this);
+
+			this.depthTest = false;
+			this.depthWrite = false;
+			this.transparent = true;
+			this.linewidth = 1;
+
+			this.setValues(parameters);
+
+			this.oldColor = this.color.clone();
+			this.oldOpacity = this.opacity;
+
+			this.highlight = function (highlighted) {
+
+				if (highlighted) {
+
+					this.color.setRGB(1, 1, 0);
+					this.opacity = 1;
+				} else {
+
+					this.color.copy(this.oldColor);
+					this.opacity = this.oldOpacity;
+				}
+			};
+		};
+
+		GizmoLineMaterial.prototype = Object.create(_three2.default.LineBasicMaterial.prototype);
+		GizmoLineMaterial.prototype.constructor = GizmoLineMaterial;
+
+		var pickerMaterial = new GizmoMaterial({ visible: false, transparent: false });
+
+		_three2.default.TransformGizmo = function () {
+
+			var scope = this;
+
+			this.init = function () {
+
+				_three2.default.Object3D.call(this);
+
+				this.handles = new _three2.default.Object3D();
+				this.pickers = new _three2.default.Object3D();
+				this.planes = new _three2.default.Object3D();
+
+				this.add(this.handles);
+				this.add(this.pickers);
+				this.add(this.planes);
+
+				//// PLANES
+
+				var planeGeometry = new _three2.default.PlaneBufferGeometry(50, 50, 2, 2);
+				var planeMaterial = new _three2.default.MeshBasicMaterial({ visible: false, side: _three2.default.DoubleSide });
+
+				var planes = {
+					"XY": new _three2.default.Mesh(planeGeometry, planeMaterial),
+					"YZ": new _three2.default.Mesh(planeGeometry, planeMaterial),
+					"XZ": new _three2.default.Mesh(planeGeometry, planeMaterial),
+					"XYZE": new _three2.default.Mesh(planeGeometry, planeMaterial)
+				};
+
+				this.activePlane = planes["XYZE"];
+
+				planes["YZ"].rotation.set(0, Math.PI / 2, 0);
+				planes["XZ"].rotation.set(-Math.PI / 2, 0, 0);
+
+				for (var i in planes) {
+
+					planes[i].name = i;
+					this.planes.add(planes[i]);
+					this.planes[i] = planes[i];
+				}
+
+				//// HANDLES AND PICKERS
+
+				var setupGizmos = function setupGizmos(gizmoMap, parent) {
+
+					for (var name in gizmoMap) {
+
+						for (i = gizmoMap[name].length; i--;) {
+
+							var object = gizmoMap[name][i][0];
+							var position = gizmoMap[name][i][1];
+							var rotation = gizmoMap[name][i][2];
+
+							object.name = name;
+
+							if (position) object.position.set(position[0], position[1], position[2]);
+							if (rotation) object.rotation.set(rotation[0], rotation[1], rotation[2]);
+
+							parent.add(object);
+						}
+					}
+				};
+
+				setupGizmos(this.handleGizmos, this.handles);
+				setupGizmos(this.pickerGizmos, this.pickers);
+
+				// reset Transformations
+
+				this.traverse(function (child) {
+
+					if (child instanceof _three2.default.Mesh) {
+
+						child.updateMatrix();
+
+						var tempGeometry = child.geometry.clone();
+						tempGeometry.applyMatrix(child.matrix);
+						child.geometry = tempGeometry;
+
+						child.position.set(0, 0, 0);
+						child.rotation.set(0, 0, 0);
+						child.scale.set(1, 1, 1);
+					}
+				});
+			};
+
+			this.highlight = function (axis) {
+
+				this.traverse(function (child) {
+
+					if (child.material && child.material.highlight) {
+
+						if (child.name === axis) {
+
+							child.material.highlight(true);
+						} else {
+
+							child.material.highlight(false);
+						}
+					}
+				});
+			};
+		};
+
+		_three2.default.TransformGizmo.prototype = Object.create(_three2.default.Object3D.prototype);
+		_three2.default.TransformGizmo.prototype.constructor = _three2.default.TransformGizmo;
+
+		_three2.default.TransformGizmo.prototype.update = function (rotation, eye) {
+
+			var vec1 = new _three2.default.Vector3(0, 0, 0);
+			var vec2 = new _three2.default.Vector3(0, 1, 0);
+			var lookAtMatrix = new _three2.default.Matrix4();
+
+			this.traverse(function (child) {
+
+				if (child.name.search("E") !== -1) {
+
+					child.quaternion.setFromRotationMatrix(lookAtMatrix.lookAt(eye, vec1, vec2));
+				} else if (child.name.search("X") !== -1 || child.name.search("Y") !== -1 || child.name.search("Z") !== -1) {
+
+					child.quaternion.setFromEuler(rotation);
+				}
+			});
+		};
+
+		_three2.default.TransformGizmoTranslate = function () {
+
+			_three2.default.TransformGizmo.call(this);
+
+			var arrowGeometry = new _three2.default.Geometry();
+			var mesh = new _three2.default.Mesh(new _three2.default.CylinderGeometry(0, 0.05, 0.2, 12, 1, false));
+			mesh.position.y = 0.5;
+			mesh.updateMatrix();
+
+			arrowGeometry.merge(mesh.geometry, mesh.matrix);
+
+			var lineXGeometry = new _three2.default.BufferGeometry();
+			lineXGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 1, 0, 0], 3));
+
+			var lineYGeometry = new _three2.default.BufferGeometry();
+			lineYGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 0, 1, 0], 3));
+
+			var lineZGeometry = new _three2.default.BufferGeometry();
+			lineZGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 0, 0, 1], 3));
+
+			this.handleGizmos = {
+
+				X: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0xff0000 })), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new _three2.default.Line(lineXGeometry, new GizmoLineMaterial({ color: 0xff0000 }))]],
+
+				Y: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0x00ff00 })), [0, 0.5, 0]], [new _three2.default.Line(lineYGeometry, new GizmoLineMaterial({ color: 0x00ff00 }))]],
+
+				Z: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0x0000ff })), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new _three2.default.Line(lineZGeometry, new GizmoLineMaterial({ color: 0x0000ff }))]],
+
+				XYZ: [[new _three2.default.Mesh(new _three2.default.OctahedronGeometry(0.1, 0), new GizmoMaterial({ color: 0xffffff, opacity: 0.25 })), [0, 0, 0], [0, 0, 0]]],
+
+				XY: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.29, 0.29), new GizmoMaterial({ color: 0xffff00, opacity: 0.25 })), [0.15, 0.15, 0]]],
+
+				YZ: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.29, 0.29), new GizmoMaterial({ color: 0x00ffff, opacity: 0.25 })), [0, 0.15, 0.15], [0, Math.PI / 2, 0]]],
+
+				XZ: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.29, 0.29), new GizmoMaterial({ color: 0xff00ff, opacity: 0.25 })), [0.15, 0, 0.15], [-Math.PI / 2, 0, 0]]]
+
+			};
+
+			this.pickerGizmos = {
+
+				X: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0.6, 0, 0], [0, 0, -Math.PI / 2]]],
+
+				Y: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0, 0.6, 0]]],
+
+				Z: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0, 0, 0.6], [Math.PI / 2, 0, 0]]],
+
+				XYZ: [[new _three2.default.Mesh(new _three2.default.OctahedronGeometry(0.2, 0), pickerMaterial)]],
+
+				XY: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.4, 0.4), pickerMaterial), [0.2, 0.2, 0]]],
+
+				YZ: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.4, 0.4), pickerMaterial), [0, 0.2, 0.2], [0, Math.PI / 2, 0]]],
+
+				XZ: [[new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(0.4, 0.4), pickerMaterial), [0.2, 0, 0.2], [-Math.PI / 2, 0, 0]]]
+
+			};
+
+			this.setActivePlane = function (axis, eye) {
+
+				var tempMatrix = new _three2.default.Matrix4();
+				eye.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
+
+				if (axis === "X") {
+
+					this.activePlane = this.planes["XY"];
+
+					if (Math.abs(eye.y) > Math.abs(eye.z)) this.activePlane = this.planes["XZ"];
+				}
+
+				if (axis === "Y") {
+
+					this.activePlane = this.planes["XY"];
+
+					if (Math.abs(eye.x) > Math.abs(eye.z)) this.activePlane = this.planes["YZ"];
+				}
+
+				if (axis === "Z") {
+
+					this.activePlane = this.planes["XZ"];
+
+					if (Math.abs(eye.x) > Math.abs(eye.y)) this.activePlane = this.planes["YZ"];
+				}
+
+				if (axis === "XYZ") this.activePlane = this.planes["XYZE"];
+
+				if (axis === "XY") this.activePlane = this.planes["XY"];
+
+				if (axis === "YZ") this.activePlane = this.planes["YZ"];
+
+				if (axis === "XZ") this.activePlane = this.planes["XZ"];
+			};
+
+			this.init();
+		};
+
+		_three2.default.TransformGizmoTranslate.prototype = Object.create(_three2.default.TransformGizmo.prototype);
+		_three2.default.TransformGizmoTranslate.prototype.constructor = _three2.default.TransformGizmoTranslate;
+
+		_three2.default.TransformGizmoRotate = function () {
+
+			_three2.default.TransformGizmo.call(this);
+
+			var CircleGeometry = function CircleGeometry(radius, facing, arc) {
+
+				var geometry = new _three2.default.BufferGeometry();
+				var vertices = [];
+				arc = arc ? arc : 1;
+
+				for (var i = 0; i <= 64 * arc; ++i) {
+
+					if (facing === 'x') vertices.push(0, Math.cos(i / 32 * Math.PI) * radius, Math.sin(i / 32 * Math.PI) * radius);
+					if (facing === 'y') vertices.push(Math.cos(i / 32 * Math.PI) * radius, 0, Math.sin(i / 32 * Math.PI) * radius);
+					if (facing === 'z') vertices.push(Math.sin(i / 32 * Math.PI) * radius, Math.cos(i / 32 * Math.PI) * radius, 0);
+				}
+
+				geometry.addAttribute('position', new _three2.default.Float32Attribute(vertices, 3));
+				return geometry;
+			};
+
+			this.handleGizmos = {
+
+				X: [[new _three2.default.Line(new CircleGeometry(1, 'x', 0.5), new GizmoLineMaterial({ color: 0xff0000 }))]],
+
+				Y: [[new _three2.default.Line(new CircleGeometry(1, 'y', 0.5), new GizmoLineMaterial({ color: 0x00ff00 }))]],
+
+				Z: [[new _three2.default.Line(new CircleGeometry(1, 'z', 0.5), new GizmoLineMaterial({ color: 0x0000ff }))]],
+
+				E: [[new _three2.default.Line(new CircleGeometry(1.25, 'z', 1), new GizmoLineMaterial({ color: 0xcccc00 }))]],
+
+				XYZE: [[new _three2.default.Line(new CircleGeometry(1, 'z', 1), new GizmoLineMaterial({ color: 0x787878 }))]]
+
+			};
+
+			this.pickerGizmos = {
+
+				X: [[new _three2.default.Mesh(new _three2.default.TorusBufferGeometry(1, 0.12, 4, 12, Math.PI), pickerMaterial), [0, 0, 0], [0, -Math.PI / 2, -Math.PI / 2]]],
+
+				Y: [[new _three2.default.Mesh(new _three2.default.TorusBufferGeometry(1, 0.12, 4, 12, Math.PI), pickerMaterial), [0, 0, 0], [Math.PI / 2, 0, 0]]],
+
+				Z: [[new _three2.default.Mesh(new _three2.default.TorusBufferGeometry(1, 0.12, 4, 12, Math.PI), pickerMaterial), [0, 0, 0], [0, 0, -Math.PI / 2]]],
+
+				E: [[new _three2.default.Mesh(new _three2.default.TorusBufferGeometry(1.25, 0.12, 2, 24), pickerMaterial)]],
+
+				XYZE: [[new _three2.default.Mesh(new _three2.default.Geometry())] // TODO
+				]
+
+			};
+
+			this.setActivePlane = function (axis) {
+
+				if (axis === "E") this.activePlane = this.planes["XYZE"];
+
+				if (axis === "X") this.activePlane = this.planes["YZ"];
+
+				if (axis === "Y") this.activePlane = this.planes["XZ"];
+
+				if (axis === "Z") this.activePlane = this.planes["XY"];
+			};
+
+			this.update = function (rotation, eye2) {
+
+				_three2.default.TransformGizmo.prototype.update.apply(this, arguments);
+
+				var group = {
+
+					handles: this["handles"],
+					pickers: this["pickers"]
+
+				};
+
+				var tempMatrix = new _three2.default.Matrix4();
+				var worldRotation = new _three2.default.Euler(0, 0, 1);
+				var tempQuaternion = new _three2.default.Quaternion();
+				var unitX = new _three2.default.Vector3(1, 0, 0);
+				var unitY = new _three2.default.Vector3(0, 1, 0);
+				var unitZ = new _three2.default.Vector3(0, 0, 1);
+				var quaternionX = new _three2.default.Quaternion();
+				var quaternionY = new _three2.default.Quaternion();
+				var quaternionZ = new _three2.default.Quaternion();
+				var eye = eye2.clone();
+
+				worldRotation.copy(this.planes["XY"].rotation);
+				tempQuaternion.setFromEuler(worldRotation);
+
+				tempMatrix.makeRotationFromQuaternion(tempQuaternion).getInverse(tempMatrix);
+				eye.applyMatrix4(tempMatrix);
+
+				this.traverse(function (child) {
+
+					tempQuaternion.setFromEuler(worldRotation);
+
+					if (child.name === "X") {
+
+						quaternionX.setFromAxisAngle(unitX, Math.atan2(-eye.y, eye.z));
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+						child.quaternion.copy(tempQuaternion);
+					}
+
+					if (child.name === "Y") {
+
+						quaternionY.setFromAxisAngle(unitY, Math.atan2(eye.x, eye.z));
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
+						child.quaternion.copy(tempQuaternion);
+					}
+
+					if (child.name === "Z") {
+
+						quaternionZ.setFromAxisAngle(unitZ, Math.atan2(eye.y, eye.x));
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
+						child.quaternion.copy(tempQuaternion);
+					}
+				});
+			};
+
+			this.init();
+		};
+
+		_three2.default.TransformGizmoRotate.prototype = Object.create(_three2.default.TransformGizmo.prototype);
+		_three2.default.TransformGizmoRotate.prototype.constructor = _three2.default.TransformGizmoRotate;
+
+		_three2.default.TransformGizmoScale = function () {
+
+			_three2.default.TransformGizmo.call(this);
+
+			var arrowGeometry = new _three2.default.Geometry();
+			var mesh = new _three2.default.Mesh(new _three2.default.BoxGeometry(0.125, 0.125, 0.125));
+			mesh.position.y = 0.5;
+			mesh.updateMatrix();
+
+			arrowGeometry.merge(mesh.geometry, mesh.matrix);
+
+			var lineXGeometry = new _three2.default.BufferGeometry();
+			lineXGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 1, 0, 0], 3));
+
+			var lineYGeometry = new _three2.default.BufferGeometry();
+			lineYGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 0, 1, 0], 3));
+
+			var lineZGeometry = new _three2.default.BufferGeometry();
+			lineZGeometry.addAttribute('position', new _three2.default.Float32Attribute([0, 0, 0, 0, 0, 1], 3));
+
+			this.handleGizmos = {
+
+				X: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0xff0000 })), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new _three2.default.Line(lineXGeometry, new GizmoLineMaterial({ color: 0xff0000 }))]],
+
+				Y: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0x00ff00 })), [0, 0.5, 0]], [new _three2.default.Line(lineYGeometry, new GizmoLineMaterial({ color: 0x00ff00 }))]],
+
+				Z: [[new _three2.default.Mesh(arrowGeometry, new GizmoMaterial({ color: 0x0000ff })), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new _three2.default.Line(lineZGeometry, new GizmoLineMaterial({ color: 0x0000ff }))]],
+
+				XYZ: [[new _three2.default.Mesh(new _three2.default.BoxBufferGeometry(0.125, 0.125, 0.125), new GizmoMaterial({ color: 0xffffff, opacity: 0.25 }))]]
+
+			};
+
+			this.pickerGizmos = {
+
+				X: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0.6, 0, 0], [0, 0, -Math.PI / 2]]],
+
+				Y: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0, 0.6, 0]]],
+
+				Z: [[new _three2.default.Mesh(new _three2.default.CylinderBufferGeometry(0.2, 0, 1, 4, 1, false), pickerMaterial), [0, 0, 0.6], [Math.PI / 2, 0, 0]]],
+
+				XYZ: [[new _three2.default.Mesh(new _three2.default.BoxBufferGeometry(0.4, 0.4, 0.4), pickerMaterial)]]
+
+			};
+
+			this.setActivePlane = function (axis, eye) {
+
+				var tempMatrix = new _three2.default.Matrix4();
+				eye.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
+
+				if (axis === "X") {
+
+					this.activePlane = this.planes["XY"];
+					if (Math.abs(eye.y) > Math.abs(eye.z)) this.activePlane = this.planes["XZ"];
+				}
+
+				if (axis === "Y") {
+
+					this.activePlane = this.planes["XY"];
+					if (Math.abs(eye.x) > Math.abs(eye.z)) this.activePlane = this.planes["YZ"];
+				}
+
+				if (axis === "Z") {
+
+					this.activePlane = this.planes["XZ"];
+					if (Math.abs(eye.x) > Math.abs(eye.y)) this.activePlane = this.planes["YZ"];
+				}
+
+				if (axis === "XYZ") this.activePlane = this.planes["XYZE"];
+			};
+
+			this.init();
+		};
+
+		_three2.default.TransformGizmoScale.prototype = Object.create(_three2.default.TransformGizmo.prototype);
+		_three2.default.TransformGizmoScale.prototype.constructor = _three2.default.TransformGizmoScale;
+
+		_three2.default.TransformControls = function (camera, domElement) {
+
+			// TODO: Make non-uniform scale and rotate play nice in hierarchies
+			// TODO: ADD RXYZ contol
+
+			_three2.default.Object3D.call(this);
+
+			domElement = domElement !== undefined ? domElement : document;
+
+			this.object = undefined;
+			this.visible = false;
+			this.translationSnap = null;
+			this.rotationSnap = null;
+			this.space = "world";
+			this.size = 1;
+			this.axis = null;
+
+			var scope = this;
+
+			var _mode = "translate";
+			var _dragging = false;
+			var _plane = "XY";
+			var _gizmo = {
+
+				"translate": new _three2.default.TransformGizmoTranslate(),
+				"rotate": new _three2.default.TransformGizmoRotate(),
+				"scale": new _three2.default.TransformGizmoScale()
+			};
+
+			for (var type in _gizmo) {
+
+				var gizmoObj = _gizmo[type];
+
+				gizmoObj.visible = type === _mode;
+				this.add(gizmoObj);
+			}
+
+			var changeEvent = { type: "change" };
+			var mouseDownEvent = { type: "mouseDown" };
+			var mouseUpEvent = { type: "mouseUp", mode: _mode };
+			var objectChangeEvent = { type: "objectChange" };
+
+			var ray = new _three2.default.Raycaster();
+			var pointerVector = new _three2.default.Vector2();
+
+			var point = new _three2.default.Vector3();
+			var offset = new _three2.default.Vector3();
+
+			var rotation = new _three2.default.Vector3();
+			var offsetRotation = new _three2.default.Vector3();
+			var scale = 1;
+
+			var lookAtMatrix = new _three2.default.Matrix4();
+			var eye = new _three2.default.Vector3();
+
+			var tempMatrix = new _three2.default.Matrix4();
+			var tempVector = new _three2.default.Vector3();
+			var tempQuaternion = new _three2.default.Quaternion();
+			var unitX = new _three2.default.Vector3(1, 0, 0);
+			var unitY = new _three2.default.Vector3(0, 1, 0);
+			var unitZ = new _three2.default.Vector3(0, 0, 1);
+
+			var quaternionXYZ = new _three2.default.Quaternion();
+			var quaternionX = new _three2.default.Quaternion();
+			var quaternionY = new _three2.default.Quaternion();
+			var quaternionZ = new _three2.default.Quaternion();
+			var quaternionE = new _three2.default.Quaternion();
+
+			var oldPosition = new _three2.default.Vector3();
+			var oldScale = new _three2.default.Vector3();
+			var oldRotationMatrix = new _three2.default.Matrix4();
+
+			var parentRotationMatrix = new _three2.default.Matrix4();
+			var parentScale = new _three2.default.Vector3();
+
+			var worldPosition = new _three2.default.Vector3();
+			var worldRotation = new _three2.default.Euler();
+			var worldRotationMatrix = new _three2.default.Matrix4();
+			var camPosition = new _three2.default.Vector3();
+			var camRotation = new _three2.default.Euler();
+
+			domElement.addEventListener("mousedown", onPointerDown, false);
+			domElement.addEventListener("touchstart", onPointerDown, false);
+
+			domElement.addEventListener("mousemove", onPointerHover, false);
+			domElement.addEventListener("touchmove", onPointerHover, false);
+
+			domElement.addEventListener("mousemove", onPointerMove, false);
+			domElement.addEventListener("touchmove", onPointerMove, false);
+
+			domElement.addEventListener("mouseup", onPointerUp, false);
+			domElement.addEventListener("mouseout", onPointerUp, false);
+			domElement.addEventListener("touchend", onPointerUp, false);
+			domElement.addEventListener("touchcancel", onPointerUp, false);
+			domElement.addEventListener("touchleave", onPointerUp, false);
+
+			this.dispose = function () {
+
+				domElement.removeEventListener("mousedown", onPointerDown);
+				domElement.removeEventListener("touchstart", onPointerDown);
+
+				domElement.removeEventListener("mousemove", onPointerHover);
+				domElement.removeEventListener("touchmove", onPointerHover);
+
+				domElement.removeEventListener("mousemove", onPointerMove);
+				domElement.removeEventListener("touchmove", onPointerMove);
+
+				domElement.removeEventListener("mouseup", onPointerUp);
+				domElement.removeEventListener("mouseout", onPointerUp);
+				domElement.removeEventListener("touchend", onPointerUp);
+				domElement.removeEventListener("touchcancel", onPointerUp);
+				domElement.removeEventListener("touchleave", onPointerUp);
+			};
+
+			this.attach = function (object) {
+
+				this.object = object;
+				this.visible = true;
+				this.update();
+			};
+
+			this.detach = function () {
+
+				this.object = undefined;
+				this.visible = false;
+				this.axis = null;
+			};
+
+			this.getMode = function () {
+
+				return _mode;
+			};
+
+			this.setMode = function (mode) {
+
+				_mode = mode ? mode : _mode;
+
+				if (_mode === "scale") scope.space = "local";
+
+				for (var type in _gizmo) {
+					_gizmo[type].visible = type === _mode;
+				}this.update();
+				scope.dispatchEvent(changeEvent);
+			};
+
+			this.setTranslationSnap = function (translationSnap) {
+
+				scope.translationSnap = translationSnap;
+			};
+
+			this.setRotationSnap = function (rotationSnap) {
+
+				scope.rotationSnap = rotationSnap;
+			};
+
+			this.setSize = function (size) {
+
+				scope.size = size;
+				this.update();
+				scope.dispatchEvent(changeEvent);
+			};
+
+			this.setSpace = function (space) {
+
+				scope.space = space;
+				this.update();
+				scope.dispatchEvent(changeEvent);
+			};
+
+			this.update = function () {
+
+				if (scope.object === undefined) return;
+
+				scope.object.updateMatrixWorld();
+				worldPosition.setFromMatrixPosition(scope.object.matrixWorld);
+				worldRotation.setFromRotationMatrix(tempMatrix.extractRotation(scope.object.matrixWorld));
+
+				camera.updateMatrixWorld();
+				camPosition.setFromMatrixPosition(camera.matrixWorld);
+				camRotation.setFromRotationMatrix(tempMatrix.extractRotation(camera.matrixWorld));
+
+				scale = worldPosition.distanceTo(camPosition) / 6 * scope.size;
+				this.position.copy(worldPosition);
+				this.scale.set(scale, scale, scale);
+
+				eye.copy(camPosition).sub(worldPosition).normalize();
+
+				if (scope.space === "local") {
+
+					_gizmo[_mode].update(worldRotation, eye);
+				} else if (scope.space === "world") {
+
+					_gizmo[_mode].update(new _three2.default.Euler(), eye);
+				}
+
+				_gizmo[_mode].highlight(scope.axis);
+			};
+
+			function onPointerHover(event) {
+
+				if (scope.object === undefined || _dragging === true || event.button !== undefined && event.button !== 0) return;
+
+				var pointer = event.changedTouches ? event.changedTouches[0] : event;
+
+				var intersect = intersectObjects(pointer, _gizmo[_mode].pickers.children);
+
+				var axis = null;
+
+				if (intersect) {
+
+					axis = intersect.object.name;
+
+					event.preventDefault();
+				}
+
+				if (scope.axis !== axis) {
+
+					scope.axis = axis;
+					scope.update();
+					scope.dispatchEvent(changeEvent);
+				}
+			}
+
+			function onPointerDown(event) {
+
+				if (scope.object === undefined || _dragging === true || event.button !== undefined && event.button !== 0) return;
+
+				var pointer = event.changedTouches ? event.changedTouches[0] : event;
+
+				if (pointer.button === 0 || pointer.button === undefined) {
+
+					var intersect = intersectObjects(pointer, _gizmo[_mode].pickers.children);
+
+					if (intersect) {
+
+						event.preventDefault();
+						event.stopPropagation();
+
+						scope.dispatchEvent(mouseDownEvent);
+
+						scope.axis = intersect.object.name;
+
+						scope.update();
+
+						eye.copy(camPosition).sub(worldPosition).normalize();
+
+						_gizmo[_mode].setActivePlane(scope.axis, eye);
+
+						var planeIntersect = intersectObjects(pointer, [_gizmo[_mode].activePlane]);
+
+						if (planeIntersect) {
+
+							oldPosition.copy(scope.object.position);
+							oldScale.copy(scope.object.scale);
+
+							oldRotationMatrix.extractRotation(scope.object.matrix);
+							worldRotationMatrix.extractRotation(scope.object.matrixWorld);
+
+							parentRotationMatrix.extractRotation(scope.object.parent.matrixWorld);
+							parentScale.setFromMatrixScale(tempMatrix.getInverse(scope.object.parent.matrixWorld));
+
+							offset.copy(planeIntersect.point);
+						}
+					}
+				}
+
+				_dragging = true;
+			}
+
+			function onPointerMove(event) {
+
+				if (scope.object === undefined || scope.axis === null || _dragging === false || event.button !== undefined && event.button !== 0) return;
+
+				var pointer = event.changedTouches ? event.changedTouches[0] : event;
+
+				var planeIntersect = intersectObjects(pointer, [_gizmo[_mode].activePlane]);
+
+				if (planeIntersect === false) return;
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				point.copy(planeIntersect.point);
+
+				if (_mode === "translate") {
+
+					point.sub(offset);
+					point.multiply(parentScale);
+
+					if (scope.space === "local") {
+
+						point.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
+
+						if (scope.axis.search("X") === -1) point.x = 0;
+						if (scope.axis.search("Y") === -1) point.y = 0;
+						if (scope.axis.search("Z") === -1) point.z = 0;
+
+						point.applyMatrix4(oldRotationMatrix);
+
+						scope.object.position.copy(oldPosition);
+						scope.object.position.add(point);
+					}
+
+					if (scope.space === "world" || scope.axis.search("XYZ") !== -1) {
+
+						if (scope.axis.search("X") === -1) point.x = 0;
+						if (scope.axis.search("Y") === -1) point.y = 0;
+						if (scope.axis.search("Z") === -1) point.z = 0;
+
+						point.applyMatrix4(tempMatrix.getInverse(parentRotationMatrix));
+
+						scope.object.position.copy(oldPosition);
+						scope.object.position.add(point);
+					}
+
+					if (scope.translationSnap !== null) {
+
+						if (scope.space === "local") {
+
+							scope.object.position.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
+						}
+
+						if (scope.axis.search("X") !== -1) scope.object.position.x = Math.round(scope.object.position.x / scope.translationSnap) * scope.translationSnap;
+						if (scope.axis.search("Y") !== -1) scope.object.position.y = Math.round(scope.object.position.y / scope.translationSnap) * scope.translationSnap;
+						if (scope.axis.search("Z") !== -1) scope.object.position.z = Math.round(scope.object.position.z / scope.translationSnap) * scope.translationSnap;
+
+						if (scope.space === "local") {
+
+							scope.object.position.applyMatrix4(worldRotationMatrix);
+						}
+					}
+				} else if (_mode === "scale") {
+
+					point.sub(offset);
+					point.multiply(parentScale);
+
+					if (scope.space === "local") {
+
+						if (scope.axis === "XYZ") {
+
+							scale = 1 + point.y / Math.max(oldScale.x, oldScale.y, oldScale.z);
+
+							scope.object.scale.x = oldScale.x * scale;
+							scope.object.scale.y = oldScale.y * scale;
+							scope.object.scale.z = oldScale.z * scale;
+						} else {
+
+							point.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
+
+							if (scope.axis === "X") scope.object.scale.x = oldScale.x * (1 + point.x / oldScale.x);
+							if (scope.axis === "Y") scope.object.scale.y = oldScale.y * (1 + point.y / oldScale.y);
+							if (scope.axis === "Z") scope.object.scale.z = oldScale.z * (1 + point.z / oldScale.z);
+						}
+					}
+				} else if (_mode === "rotate") {
+
+					point.sub(worldPosition);
+					point.multiply(parentScale);
+					tempVector.copy(offset).sub(worldPosition);
+					tempVector.multiply(parentScale);
+
+					if (scope.axis === "E") {
+
+						point.applyMatrix4(tempMatrix.getInverse(lookAtMatrix));
+						tempVector.applyMatrix4(tempMatrix.getInverse(lookAtMatrix));
+
+						rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+						offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+
+						tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
+
+						quaternionE.setFromAxisAngle(eye, rotation.z - offsetRotation.z);
+						quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
+
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionE);
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
+
+						scope.object.quaternion.copy(tempQuaternion);
+					} else if (scope.axis === "XYZE") {
+
+						quaternionE.setFromEuler(point.clone().cross(tempVector).normalize()); // rotation axis
+
+						tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
+						quaternionX.setFromAxisAngle(quaternionE, -point.clone().angleTo(tempVector));
+						quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
+
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
+
+						scope.object.quaternion.copy(tempQuaternion);
+					} else if (scope.space === "local") {
+
+						point.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
+
+						tempVector.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
+
+						rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+						offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+
+						quaternionXYZ.setFromRotationMatrix(oldRotationMatrix);
+
+						if (scope.rotationSnap !== null) {
+
+							quaternionX.setFromAxisAngle(unitX, Math.round((rotation.x - offsetRotation.x) / scope.rotationSnap) * scope.rotationSnap);
+							quaternionY.setFromAxisAngle(unitY, Math.round((rotation.y - offsetRotation.y) / scope.rotationSnap) * scope.rotationSnap);
+							quaternionZ.setFromAxisAngle(unitZ, Math.round((rotation.z - offsetRotation.z) / scope.rotationSnap) * scope.rotationSnap);
+						} else {
+
+							quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
+							quaternionY.setFromAxisAngle(unitY, rotation.y - offsetRotation.y);
+							quaternionZ.setFromAxisAngle(unitZ, rotation.z - offsetRotation.z);
+						}
+
+						if (scope.axis === "X") quaternionXYZ.multiplyQuaternions(quaternionXYZ, quaternionX);
+						if (scope.axis === "Y") quaternionXYZ.multiplyQuaternions(quaternionXYZ, quaternionY);
+						if (scope.axis === "Z") quaternionXYZ.multiplyQuaternions(quaternionXYZ, quaternionZ);
+
+						scope.object.quaternion.copy(quaternionXYZ);
+					} else if (scope.space === "world") {
+
+						rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+						offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+
+						tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
+
+						if (scope.rotationSnap !== null) {
+
+							quaternionX.setFromAxisAngle(unitX, Math.round((rotation.x - offsetRotation.x) / scope.rotationSnap) * scope.rotationSnap);
+							quaternionY.setFromAxisAngle(unitY, Math.round((rotation.y - offsetRotation.y) / scope.rotationSnap) * scope.rotationSnap);
+							quaternionZ.setFromAxisAngle(unitZ, Math.round((rotation.z - offsetRotation.z) / scope.rotationSnap) * scope.rotationSnap);
+						} else {
+
+							quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
+							quaternionY.setFromAxisAngle(unitY, rotation.y - offsetRotation.y);
+							quaternionZ.setFromAxisAngle(unitZ, rotation.z - offsetRotation.z);
+						}
+
+						quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
+
+						if (scope.axis === "X") tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+						if (scope.axis === "Y") tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
+						if (scope.axis === "Z") tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
+
+						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
+
+						scope.object.quaternion.copy(tempQuaternion);
+					}
+				}
+
+				scope.update();
+				scope.dispatchEvent(changeEvent);
+				scope.dispatchEvent(objectChangeEvent);
+			}
+
+			function onPointerUp(event) {
+
+				event.preventDefault(); // Prevent MouseEvent on mobile
+
+				if (event.button !== undefined && event.button !== 0) return;
+
+				if (_dragging && scope.axis !== null) {
+
+					mouseUpEvent.mode = _mode;
+					scope.dispatchEvent(mouseUpEvent);
+				}
+
+				_dragging = false;
+
+				if (event instanceof TouchEvent) {
+
+					// Force "rollover"
+
+					scope.axis = null;
+					scope.update();
+					scope.dispatchEvent(changeEvent);
+				} else {
+
+					onPointerHover(event);
+				}
+			}
+
+			function intersectObjects(pointer, objects) {
+
+				var rect = domElement.getBoundingClientRect();
+				var x = (pointer.clientX - rect.left) / rect.width;
+				var y = (pointer.clientY - rect.top) / rect.height;
+
+				pointerVector.set(x * 2 - 1, -(y * 2) + 1);
+				ray.setFromCamera(pointerVector, camera);
+
+				var intersections = ray.intersectObjects(objects, true);
+				return intersections[0] ? intersections[0] : false;
+			}
+		};
+
+		_three2.default.TransformControls.prototype = Object.create(_three2.default.Object3D.prototype);
+		_three2.default.TransformControls.prototype.constructor = _three2.default.TransformControls;
+		return _three2.default.TransformControls;
+	}(); /**
+	      * @author arodic / https://github.com/arodic
+	      */
+
+/***/ },
+/* 219 */,
+/* 220 */,
+/* 221 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	/**
+	 * lodash 4.0.1 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+	var debounce = __webpack_require__(222);
+
+	/** Used as the `TypeError` message for "Functions" methods. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+
+	/**
+	 * Creates a throttled function that only invokes `func` at most once per
+	 * every `wait` milliseconds. The throttled function comes with a `cancel`
+	 * method to cancel delayed `func` invocations and a `flush` method to
+	 * immediately invoke them. Provide an options object to indicate whether
+	 * `func` should be invoked on the leading and/or trailing edge of the `wait`
+	 * timeout. The `func` is invoked with the last arguments provided to the
+	 * throttled function. Subsequent calls to the throttled function return the
+	 * result of the last `func` invocation.
+	 *
+	 * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
+	 * on the trailing edge of the timeout only if the throttled function is
+	 * invoked more than once during the `wait` timeout.
+	 *
+	 * See [David Corbacho's article](http://drupalmotion.com/article/debounce-and-throttle-visual-explanation)
+	 * for details over the differences between `_.throttle` and `_.debounce`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Function
+	 * @param {Function} func The function to throttle.
+	 * @param {number} [wait=0] The number of milliseconds to throttle invocations to.
+	 * @param {Object} [options] The options object.
+	 * @param {boolean} [options.leading=true] Specify invoking on the leading
+	 *  edge of the timeout.
+	 * @param {boolean} [options.trailing=true] Specify invoking on the trailing
+	 *  edge of the timeout.
+	 * @returns {Function} Returns the new throttled function.
+	 * @example
+	 *
+	 * // Avoid excessively updating the position while scrolling.
+	 * jQuery(window).on('scroll', _.throttle(updatePosition, 100));
+	 *
+	 * // Invoke `renewToken` when the click event is fired, but not more than once every 5 minutes.
+	 * var throttled = _.throttle(renewToken, 300000, { 'trailing': false });
+	 * jQuery(element).on('click', throttled);
+	 *
+	 * // Cancel the trailing throttled invocation.
+	 * jQuery(window).on('popstate', throttled.cancel);
+	 */
+	function throttle(func, wait, options) {
+	  var leading = true,
+	      trailing = true;
+
+	  if (typeof func != 'function') {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  if (isObject(options)) {
+	    leading = 'leading' in options ? !!options.leading : leading;
+	    trailing = 'trailing' in options ? !!options.trailing : trailing;
+	  }
+	  return debounce(func, wait, {
+	    'leading': leading,
+	    'maxWait': wait,
+	    'trailing': trailing
+	  });
+	}
+
+	/**
+	 * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+	 * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+	  return !!value && (type == 'object' || type == 'function');
+	}
+
+	module.exports = throttle;
+
+/***/ },
+/* 222 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	/**
+	 * lodash 4.0.6 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+
+	/** Used as the `TypeError` message for "Functions" methods. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+
+	/** Used as references for various `Number` constants. */
+	var NAN = 0 / 0;
+
+	/** `Object#toString` result references. */
+	var funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]',
+	    symbolTag = '[object Symbol]';
+
+	/** Used to match leading and trailing whitespace. */
+	var reTrim = /^\s+|\s+$/g;
+
+	/** Used to detect bad signed hexadecimal string values. */
+	var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+	/** Used to detect binary string values. */
+	var reIsBinary = /^0b[01]+$/i;
+
+	/** Used to detect octal string values. */
+	var reIsOctal = /^0o[0-7]+$/i;
+
+	/** Built-in method references without a dependency on `root`. */
+	var freeParseInt = parseInt;
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeMax = Math.max,
+	    nativeMin = Math.min;
+
+	/**
+	 * Gets the timestamp of the number of milliseconds that have elapsed since
+	 * the Unix epoch (1 January 1970 00:00:00 UTC).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 2.4.0
+	 * @type {Function}
+	 * @category Date
+	 * @returns {number} Returns the timestamp.
+	 * @example
+	 *
+	 * _.defer(function(stamp) {
+	 *   console.log(_.now() - stamp);
+	 * }, _.now());
+	 * // => Logs the number of milliseconds it took for the deferred function to be invoked.
+	 */
+	var now = Date.now;
+
+	/**
+	 * Creates a debounced function that delays invoking `func` until after `wait`
+	 * milliseconds have elapsed since the last time the debounced function was
+	 * invoked. The debounced function comes with a `cancel` method to cancel
+	 * delayed `func` invocations and a `flush` method to immediately invoke them.
+	 * Provide an options object to indicate whether `func` should be invoked on
+	 * the leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+	 * with the last arguments provided to the debounced function. Subsequent calls
+	 * to the debounced function return the result of the last `func` invocation.
+	 *
+	 * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
+	 * on the trailing edge of the timeout only if the debounced function is
+	 * invoked more than once during the `wait` timeout.
+	 *
+	 * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+	 * for details over the differences between `_.debounce` and `_.throttle`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Function
+	 * @param {Function} func The function to debounce.
+	 * @param {number} [wait=0] The number of milliseconds to delay.
+	 * @param {Object} [options={}] The options object.
+	 * @param {boolean} [options.leading=false]
+	 *  Specify invoking on the leading edge of the timeout.
+	 * @param {number} [options.maxWait]
+	 *  The maximum time `func` is allowed to be delayed before it's invoked.
+	 * @param {boolean} [options.trailing=true]
+	 *  Specify invoking on the trailing edge of the timeout.
+	 * @returns {Function} Returns the new debounced function.
+	 * @example
+	 *
+	 * // Avoid costly calculations while the window size is in flux.
+	 * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+	 *
+	 * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+	 * jQuery(element).on('click', _.debounce(sendMail, 300, {
+	 *   'leading': true,
+	 *   'trailing': false
+	 * }));
+	 *
+	 * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+	 * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+	 * var source = new EventSource('/stream');
+	 * jQuery(source).on('message', debounced);
+	 *
+	 * // Cancel the trailing debounced invocation.
+	 * jQuery(window).on('popstate', debounced.cancel);
+	 */
+	function debounce(func, wait, options) {
+	  var lastArgs,
+	      lastThis,
+	      maxWait,
+	      result,
+	      timerId,
+	      lastCallTime = 0,
+	      lastInvokeTime = 0,
+	      leading = false,
+	      maxing = false,
+	      trailing = true;
+
+	  if (typeof func != 'function') {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  wait = toNumber(wait) || 0;
+	  if (isObject(options)) {
+	    leading = !!options.leading;
+	    maxing = 'maxWait' in options;
+	    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+	    trailing = 'trailing' in options ? !!options.trailing : trailing;
+	  }
+
+	  function invokeFunc(time) {
+	    var args = lastArgs,
+	        thisArg = lastThis;
+
+	    lastArgs = lastThis = undefined;
+	    lastInvokeTime = time;
+	    result = func.apply(thisArg, args);
+	    return result;
+	  }
+
+	  function leadingEdge(time) {
+	    // Reset any `maxWait` timer.
+	    lastInvokeTime = time;
+	    // Start the timer for the trailing edge.
+	    timerId = setTimeout(timerExpired, wait);
+	    // Invoke the leading edge.
+	    return leading ? invokeFunc(time) : result;
+	  }
+
+	  function remainingWait(time) {
+	    var timeSinceLastCall = time - lastCallTime,
+	        timeSinceLastInvoke = time - lastInvokeTime,
+	        result = wait - timeSinceLastCall;
+
+	    return maxing ? nativeMin(result, maxWait - timeSinceLastInvoke) : result;
+	  }
+
+	  function shouldInvoke(time) {
+	    var timeSinceLastCall = time - lastCallTime,
+	        timeSinceLastInvoke = time - lastInvokeTime;
+
+	    // Either this is the first call, activity has stopped and we're at the
+	    // trailing edge, the system time has gone backwards and we're treating
+	    // it as the trailing edge, or we've hit the `maxWait` limit.
+	    return !lastCallTime || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
+	  }
+
+	  function timerExpired() {
+	    var time = now();
+	    if (shouldInvoke(time)) {
+	      return trailingEdge(time);
+	    }
+	    // Restart the timer.
+	    timerId = setTimeout(timerExpired, remainingWait(time));
+	  }
+
+	  function trailingEdge(time) {
+	    clearTimeout(timerId);
+	    timerId = undefined;
+
+	    // Only invoke if we have `lastArgs` which means `func` has been
+	    // debounced at least once.
+	    if (trailing && lastArgs) {
+	      return invokeFunc(time);
+	    }
+	    lastArgs = lastThis = undefined;
+	    return result;
+	  }
+
+	  function cancel() {
+	    if (timerId !== undefined) {
+	      clearTimeout(timerId);
+	    }
+	    lastCallTime = lastInvokeTime = 0;
+	    lastArgs = lastThis = timerId = undefined;
+	  }
+
+	  function flush() {
+	    return timerId === undefined ? result : trailingEdge(now());
+	  }
+
+	  function debounced() {
+	    var time = now(),
+	        isInvoking = shouldInvoke(time);
+
+	    lastArgs = arguments;
+	    lastThis = this;
+	    lastCallTime = time;
+
+	    if (isInvoking) {
+	      if (timerId === undefined) {
+	        return leadingEdge(lastCallTime);
+	      }
+	      if (maxing) {
+	        // Handle invocations in a tight loop.
+	        clearTimeout(timerId);
+	        timerId = setTimeout(timerExpired, wait);
+	        return invokeFunc(lastCallTime);
+	      }
+	    }
+	    if (timerId === undefined) {
+	      timerId = setTimeout(timerExpired, wait);
+	    }
+	    return result;
+	  }
+	  debounced.cancel = cancel;
+	  debounced.flush = flush;
+	  return debounced;
+	}
+
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is correctly classified,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 8 which returns 'object' for typed array and weak map constructors,
+	  // and PhantomJS 1.9 which returns 'function' for `NodeList` instances.
+	  var tag = isObject(value) ? objectToString.call(value) : '';
+	  return tag == funcTag || tag == genTag;
+	}
+
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/6.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+	  return !!value && (type == 'object' || type == 'function');
+	}
+
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+	function isObjectLike(value) {
+	  return !!value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'object';
+	}
+
+	/**
+	 * Checks if `value` is classified as a `Symbol` primitive or object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is correctly classified,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isSymbol(Symbol.iterator);
+	 * // => true
+	 *
+	 * _.isSymbol('abc');
+	 * // => false
+	 */
+	function isSymbol(value) {
+	  return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'symbol' || isObjectLike(value) && objectToString.call(value) == symbolTag;
+	}
+
+	/**
+	 * Converts `value` to a number.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to process.
+	 * @returns {number} Returns the number.
+	 * @example
+	 *
+	 * _.toNumber(3);
+	 * // => 3
+	 *
+	 * _.toNumber(Number.MIN_VALUE);
+	 * // => 5e-324
+	 *
+	 * _.toNumber(Infinity);
+	 * // => Infinity
+	 *
+	 * _.toNumber('3');
+	 * // => 3
+	 */
+	function toNumber(value) {
+	  if (typeof value == 'number') {
+	    return value;
+	  }
+	  if (isSymbol(value)) {
+	    return NAN;
+	  }
+	  if (isObject(value)) {
+	    var other = isFunction(value.valueOf) ? value.valueOf() : value;
+	    value = isObject(other) ? other + '' : other;
+	  }
+	  if (typeof value != 'string') {
+	    return value === 0 ? value : +value;
+	  }
+	  value = value.replace(reTrim, '');
+	  var isBinary = reIsBinary.test(value);
+	  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+	}
+
+	module.exports = debounce;
 
 /***/ }
 /******/ ]);

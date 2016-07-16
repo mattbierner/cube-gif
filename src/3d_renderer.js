@@ -1,5 +1,7 @@
 import THREE from 'three';
 import OrbitControls from './OrbitControls';
+import TransformControls from './TransformControls';
+import throttle from 'lodash.throttle';
 
 import gen_array from './gen_array';
 import createImageData from './create_image_data';
@@ -53,6 +55,7 @@ export default class CubeRenderer {
         this._delegate = delegate;
 
         this._scene = new THREE.Scene();
+        this._uiScene = new THREE.Scene();
 
         this.initRenderer(canvas);
         this.initCamera();
@@ -68,8 +71,9 @@ export default class CubeRenderer {
     initRenderer(canvas) {
         this._renderer = new THREE.WebGLRenderer({
             canvas: canvas,
+            alpha: true
         });
-        this._renderer.localClippingEnabled = true;
+        this._renderer.autoClear = false;
         this._renderer.setClearColor(0xffffff, 0);
         this._renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
     }
@@ -84,6 +88,31 @@ export default class CubeRenderer {
         this._controls.enableDamping = true;
         this._controls.dampingFactor = 0.25;
         this._controls.enableZoom = true;
+
+        // Create transform controls
+        this._transformControls = new TransformControls(this._camera, container);
+        this._transformControls.setSize(0.50);
+        this._uiScene.add(this._transformControls);
+
+        window.addEventListener('keydown', (event) => {
+            switch (event.keyCode) {
+                case 87: // W
+                    this._transformControls.setMode("translate");
+                    break;
+
+                case 69: // E
+                    this._transformControls.setMode("rotate");
+                    break;
+
+                case 82: // R
+                    this._transformControls.setMode("scale");
+                    break;
+            }
+        });
+
+        this._transformControls.addEventListener('change', () => {
+            this._needsSlice = true;
+        });
     }
 
     resize(width, height) {
@@ -100,8 +129,7 @@ export default class CubeRenderer {
             side: THREE.DoubleSide,
             map: new THREE.Texture(),
             transparent: true,
-            opacity: 1,
-            alphaTest: 0.5
+            alphaTest: 0.5,
         });
 
         const size = 1;
@@ -119,8 +147,10 @@ export default class CubeRenderer {
         this._plane.geometry.attributes.uv.needsUpdate = true;
         this._scene.add(this._plane);
 
-        const edges = new THREE.EdgesHelper(this._plane , '#ffffff');
-        this._scene.add(edges); 
+        const edges = new THREE.EdgesHelper(this._plane, '#333333');
+        this._scene.add(edges);
+
+        this._transformControls.attach(this._plane);
     }
 
     /**
@@ -262,8 +292,8 @@ export default class CubeRenderer {
         this._scene.add(this._cube);
 
         for (const child of this._cube.children.slice()) {
-            const edges = new THREE.EdgesHelper(child , '#777777');
-            this._cube.add(edges); 
+            const edges = new THREE.EdgesHelper(child, '#cccccc');
+            this._cube.add(edges);
         }
 
         this.slice(imageData)
@@ -271,6 +301,7 @@ export default class CubeRenderer {
 
     texFromFrame(frame) {
         const text = new THREE.Texture(frame);
+        text.minFilter = THREE.NearestFilter;
         text.needsUpdate = true;
         return text;
     }
@@ -303,7 +334,6 @@ export default class CubeRenderer {
 
     sampleDataTop(imageData, f) {
         const data = createImageData(imageData.width, imageData.height);
-
         for (let y = 0; y < imageData.height; ++y) {
             const frameIndex = Math.floor(y / imageData.height * imageData.frames.length);
             const frame = imageData.frames[frameIndex];
@@ -386,14 +416,20 @@ export default class CubeRenderer {
         this.update()
         this.render();
 
-      //  this._plane.rotateZ(0.002);
-       // this._plane.rotateY(0.002);
+        //  this._plane.rotateZ(0.002);
+        // this._plane.rotateY(0.002);
 
-        this.slice(this._data);
+        this._slicer = this._slicer || throttle(() => this.slice(this._data), 50);
+
+        if (this._needsSlice) {
+            this._slicer(this._data);
+            this._needsSlice = false;
+        }
     }
 
     update() {
         this._controls.update();
+        this._transformControls.update();
 
         if (!this._cube)
             return;
@@ -403,7 +439,7 @@ export default class CubeRenderer {
         cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
         cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
         cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
-        cubeMaterial.uniforms.clippingPlane.value.w = clippingPlane.constant;
+        cubeMaterial.uniforms.clippingPlane.value.w = -clippingPlane.constant;
         cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
     }
 
@@ -411,6 +447,9 @@ export default class CubeRenderer {
      * Main render function.
      */
     render() {
+        this._renderer.clear();
         this._renderer.render(this._scene, this._camera);
+        this._renderer.clearDepth();
+        this._renderer.render(this._uiScene, this._camera);
     }
 }
