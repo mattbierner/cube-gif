@@ -82,10 +82,12 @@ export default class CubeRenderer {
 
     initGeometry() {
         const geometry = new THREE.PlaneGeometry(2, 2, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+        const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: new THREE.Texture(), transparent: true, opacity: 1, alphaTest: 0.5 });
         this._plane = new THREE.Mesh(geometry, material);
         this._plane.name = 'plane';
         this._scene.add(this._plane);
+          this._plane.rotateX(Math.PI / 2);
+      
     }
 
     /**
@@ -104,11 +106,11 @@ export default class CubeRenderer {
 
         const vertices = plane.geometry.vertices;
 
-        const p1 = vertices[0];
-        const p2 = vertices[1];
-        const p3 = vertices[2];
+        const p1 = vertices[0].clone().applyMatrix4(plane.matrix);
+        const p2 = vertices[1].clone().applyMatrix4(plane.matrix);
+        const p3 = vertices[2].clone().applyMatrix4(plane.matrix);
 
-        const l = 10;
+        const l = 100;
 
         const dx = p2.clone().sub(p1).divideScalar(l);
         const dy = p3.clone().sub(p1).divideScalar(l);
@@ -116,21 +118,39 @@ export default class CubeRenderer {
         const sampledData = createImageData(l, l);
 
         let start = p1.clone().add(dy.clone().divideScalar(2));
-        for (let y = 0 ; y < l; ++y) {
+        for (let y = 0; y < l; ++y) {
             const startRow = start.clone().add(dx.clone().divideScalar(2));
-            for (let x = 0 ; x < l; ++x) {
+            for (let x = 0; x < l; ++x) {
                 const p = startRow;
-                console.log(p.x, p.y, p.z);
-                this.copyRgba(sampledData.data, x + y * l, [x * 25, y * 25, 0, 1], 0);
+                this.copyRgba(sampledData.data, x + y * l, this.getSample(imageData, p.x, p.y, p.z), 0);
                 startRow.add(dx);
             }
             start.add(dy);
         }
 
-        const text = this.texFromFrame(sampledData);
-        const mat = new THREE.MeshBasicMaterial({ map: text });
+        const texture = this.texFromFrame(sampledData);
+        texture.flipY = false;
+        plane.material.map = texture;
+        plane.material.map.needsUpdate = true;
 
-        plane.material = mat;
+    }
+
+    getSample(imageData, x, y, z) {
+        const componentSize = 4;
+        const size = 0.5;
+        if (Math.abs(x) > size || Math.abs(y) > size || Math.abs(z) > size)
+            return [0, 0, 0, 0];
+        x += size;
+        y += size;
+        z += size;
+        const frameIndex = Math.floor(z / (size * 2) * imageData.frames.length);
+        const frame = imageData.frames[frameIndex];
+
+        const u = Math.floor(x / (size * 2) * imageData.width);
+        const v = Math.floor(y / (size * 2) * imageData.height);
+
+        const index = (v * imageData.width + u) * componentSize;
+        return [frame.data.data[index], frame.data.data[index + 1], frame.data.data[index + 2], 255];
     }
 
     setGif(imageData, options) {
@@ -277,7 +297,7 @@ export default class CubeRenderer {
         };
 
         return Object.keys(images).reduce((out, name) => {
-            const mat = new THREE.MeshBasicMaterial({ map: this.texFromFrame(images[name]) });
+            const mat = new THREE.MeshBasicMaterial({ map: this.texFromFrame(images[name]), transparent: true, opacity: 0.1 });
             mat.side = THREE.DoubleSide;
             out[name] = mat;
             return out;
@@ -285,14 +305,17 @@ export default class CubeRenderer {
     }
 
 
-
-
-
     animateImpl() {
         requestAnimationFrame(this.animate);
 
         this._controls.update();
         this.render();
+
+        this._plane.rotateX(0.005);
+        this._i = this._i || 0;
+        if (this._i++ % 5 == 0 && this._data) {
+            this.slice(this._data);
+        }
     }
 
     /**

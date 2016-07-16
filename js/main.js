@@ -29676,10 +29676,11 @@
 	        key: 'initGeometry',
 	        value: function initGeometry() {
 	            var geometry = new _three2.default.PlaneGeometry(2, 2, 1);
-	            var material = new _three2.default.MeshBasicMaterial({ color: 0xff0000, side: _three2.default.DoubleSide, transparent: true, opacity: 0.5 });
+	            var material = new _three2.default.MeshBasicMaterial({ side: _three2.default.DoubleSide, map: new _three2.default.Texture(), transparent: true, opacity: 1, alphaTest: 0.5 });
 	            this._plane = new _three2.default.Mesh(geometry, material);
 	            this._plane.name = 'plane';
 	            this._scene.add(this._plane);
+	            this._plane.rotateX(Math.PI / 2);
 	        }
 
 	        /**
@@ -29723,11 +29724,11 @@
 
 	            var vertices = plane.geometry.vertices;
 
-	            var p1 = vertices[0];
-	            var p2 = vertices[1];
-	            var p3 = vertices[2];
+	            var p1 = vertices[0].clone().applyMatrix4(plane.matrix);
+	            var p2 = vertices[1].clone().applyMatrix4(plane.matrix);
+	            var p3 = vertices[2].clone().applyMatrix4(plane.matrix);
 
-	            var l = 10;
+	            var l = 100;
 
 	            var dx = p2.clone().sub(p1).divideScalar(l);
 	            var dy = p3.clone().sub(p1).divideScalar(l);
@@ -29739,17 +29740,34 @@
 	                var startRow = start.clone().add(dx.clone().divideScalar(2));
 	                for (var x = 0; x < l; ++x) {
 	                    var p = startRow;
-	                    console.log(p.x, p.y, p.z);
-	                    this.copyRgba(sampledData.data, x + y * l, [x * 25, y * 25, 0, 1], 0);
+	                    this.copyRgba(sampledData.data, x + y * l, this.getSample(imageData, p.x, p.y, p.z), 0);
 	                    startRow.add(dx);
 	                }
 	                start.add(dy);
 	            }
 
-	            var text = this.texFromFrame(sampledData);
-	            var mat = new _three2.default.MeshBasicMaterial({ map: text });
+	            var texture = this.texFromFrame(sampledData);
+	            texture.flipY = false;
+	            plane.material.map = texture;
+	            plane.material.map.needsUpdate = true;
+	        }
+	    }, {
+	        key: 'getSample',
+	        value: function getSample(imageData, x, y, z) {
+	            var componentSize = 4;
+	            var size = 0.5;
+	            if (Math.abs(x) > size || Math.abs(y) > size || Math.abs(z) > size) return [0, 0, 0, 0];
+	            x += size;
+	            y += size;
+	            z += size;
+	            var frameIndex = Math.floor(z / (size * 2) * imageData.frames.length);
+	            var frame = imageData.frames[frameIndex];
 
-	            plane.material = mat;
+	            var u = Math.floor(x / (size * 2) * imageData.width);
+	            var v = Math.floor(y / (size * 2) * imageData.height);
+
+	            var index = (v * imageData.width + u) * componentSize;
+	            return [frame.data.data[index], frame.data.data[index + 1], frame.data.data[index + 2], 255];
 	        }
 	    }, {
 	        key: 'setGif',
@@ -29889,7 +29907,7 @@
 	            };
 
 	            return Object.keys(images).reduce(function (out, name) {
-	                var mat = new _three2.default.MeshBasicMaterial({ map: _this6.texFromFrame(images[name]) });
+	                var mat = new _three2.default.MeshBasicMaterial({ map: _this6.texFromFrame(images[name]), transparent: true, opacity: 0.1 });
 	                mat.side = _three2.default.DoubleSide;
 	                out[name] = mat;
 	                return out;
@@ -29902,6 +29920,12 @@
 
 	            this._controls.update();
 	            this.render();
+
+	            this._plane.rotateX(0.005);
+	            this._i = this._i || 0;
+	            if (this._i++ % 5 == 0 && this._data) {
+	                this.slice(this._data);
+	            }
 	        }
 
 	        /**
