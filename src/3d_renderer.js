@@ -4,6 +4,11 @@ import OrbitControls from './OrbitControls';
 import gen_array from './gen_array';
 import createImageData from './create_image_data';
 
+const blank = [0, 0, 0, 0];
+
+/**
+ * Create a plane from 4 points.
+ */
 const createPlane = (name, a, b, c, d, mat) => {
     const indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
 
@@ -30,8 +35,10 @@ const createPlane = (name, a, b, c, d, mat) => {
 
     const mesh = new THREE.Mesh(geometry, mat);
     mesh.name = name;
+    mesh.geometry.vertices = [a, b, c, d];
     return mesh;
 };
+
 
 export default class CubeRenderer {
     constructor(canvas) {
@@ -81,13 +88,30 @@ export default class CubeRenderer {
     }
 
     initGeometry() {
-        const geometry = new THREE.PlaneGeometry(2, 2, 1);
-        const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: new THREE.Texture(), transparent: true, opacity: 1, alphaTest: 0.5 });
-        this._plane = new THREE.Mesh(geometry, material);
-        this._plane.name = 'plane';
+        const material = new THREE.MeshBasicMaterial({
+            side: THREE.DoubleSide,
+            map: new THREE.Texture(),
+            transparent: true,
+            opacity: 1,
+            alphaTest: 0.5
+        });
+
+        const size = 0.5;
+        this._plane = createPlane('plane',
+            new THREE.Vector3(-size, size, 0), new THREE.Vector3(size, size, 0),
+            new THREE.Vector3(size, -size, 0), new THREE.Vector3(-size, -size, 0),
+            material);
+
+        this._plane.geometry.attributes.uv.array = new Float32Array([
+            1, 0,
+            0, 0,
+            0, 1,
+            1, 1,
+        ]);
+        this._plane.geometry.attributes.uv.needsUpdate = true;
         this._scene.add(this._plane);
-          this._plane.rotateX(Math.PI / 2);
-      
+        this._plane.rotateZ(Math.PI / 4);
+
     }
 
     /**
@@ -101,56 +125,74 @@ export default class CubeRenderer {
         }
     }
 
-    slice(imageData) {
+    slice() {
+        if (!this._data)
+            return;
+
+        const sampleWidth = 300;
+        const sampleHeight = 300;
+
         const plane = this._scene.getObjectByName('plane');
-
         const vertices = plane.geometry.vertices;
-
         const p1 = vertices[0].clone().applyMatrix4(plane.matrix);
         const p2 = vertices[1].clone().applyMatrix4(plane.matrix);
-        const p3 = vertices[2].clone().applyMatrix4(plane.matrix);
+        const p3 = vertices[3].clone().applyMatrix4(plane.matrix);
 
-        const l = 100;
+        const dx = p2.clone().sub(p1).divideScalar(sampleWidth);
+        const dx2 = dx.clone().divideScalar(2);
+        const dy = p3.clone().sub(p1).divideScalar(sampleHeight);
 
-        const dx = p2.clone().sub(p1).divideScalar(l);
-        const dy = p3.clone().sub(p1).divideScalar(l);
-
-        const sampledData = createImageData(l, l);
-
-        let start = p1.clone().add(dy.clone().divideScalar(2));
-        for (let y = 0; y < l; ++y) {
-            const startRow = start.clone().add(dx.clone().divideScalar(2));
-            for (let x = 0; x < l; ++x) {
-                const p = startRow;
-                this.copyRgba(sampledData.data, x + y * l, this.getSample(imageData, p.x, p.y, p.z), 0);
-                startRow.add(dx);
-            }
-            start.add(dy);
+        // Ensure we hvae a large enough texture buffer to write to
+        if (!plane.material.map.image || plane.material.map.image.width !== sampleWidth || plane.material.map.image.height !== sampleHeight) {
+            const texture = createImageData(sampleWidth, sampleHeight);
+            plane.material.map.image = texture;
         }
 
-        const texture = this.texFromFrame(sampledData);
-        texture.flipY = false;
-        plane.material.map = texture;
-        plane.material.map.needsUpdate = true;
+        const imageBuffer = plane.material.map.image.data;
 
+        // Take all the samples 
+        const start = p1.clone().add(dy.clone().divideScalar(2));
+        for (let y = 0; y < sampleHeight; ++y, start.add(dy)) {
+            const p = start.clone().add(dx2);
+            for (let x = 0; x < sampleWidth; ++x, p.add(dx)) {
+                this._sampleImageCube(imageBuffer, (x + y * sampleWidth) * 4, p.x, p.y, p.z);
+            }
+        }
+
+        plane.material.map.needsUpdate = true;
     }
 
-    getSample(imageData, x, y, z) {
-        const componentSize = 4;
-        const size = 0.5;
-        if (Math.abs(x) > size || Math.abs(y) > size || Math.abs(z) > size)
-            return [0, 0, 0, 0];
-        x += size;
-        y += size;
-        z += size;
-        const frameIndex = Math.floor(z / (size * 2) * imageData.frames.length);
-        const frame = imageData.frames[frameIndex];
+    /**
+     * Samples the the color value of the gif cube at a position in 3D space.
+     */
+    _sampleImageCube(dest, destIndex, x, y, z) {
+        const {width, depth, height} = this._imageCube;
 
-        const u = Math.floor(x / (size * 2) * imageData.width);
-        const v = Math.floor(y / (size * 2) * imageData.height);
+        // Shift to positive coordinates to simplify sampling
+        x += this._imageCube.width2;
+        y += this._imageCube.height2;
+        z += this._imageCube.depth2;
 
-        const index = (v * imageData.width + u) * componentSize;
-        return [frame.data.data[index], frame.data.data[index + 1], frame.data.data[index + 2], 255];
+        // Check if in cube
+        if (x < 0 || x > width || y < 0 || y > height || z < 0 || z > depth) {
+            dest[destIndex++] = 0;
+            dest[destIndex++] = 0;
+            dest[destIndex++] = 0;
+            dest[destIndex++] = 0;
+            return;
+        }
+
+        const frameIndex = Math.floor(z / depth * this._data.frames.length);
+        const frameData = this._data.frames[frameIndex].data.data;
+
+        const u = Math.floor(x / width * this._data.width);
+        const v = Math.floor(y / height * this._data.height);
+
+        let index = (v * this._data.width + u) * 4;
+        dest[destIndex++] = frameData[index++];
+        dest[destIndex++] = frameData[index++];
+        dest[destIndex++] = frameData[index++];
+        dest[destIndex++] = 255;
     }
 
     setGif(imageData, options) {
@@ -158,6 +200,16 @@ export default class CubeRenderer {
         this._data = imageData;
 
         const scale = Math.max(imageData.width, imageData.height);
+
+        this._imageCube = {
+            width: imageData.width / scale,
+            height: imageData.height / scale,
+            depth: 1,
+
+            width2: imageData.width / scale / 2,
+            height2: imageData.height / scale / 2,
+            depth2: 1 / 2
+        };
 
         const w = imageData.width / scale / 2;
         const h = imageData.height / scale / 2;
@@ -297,7 +349,7 @@ export default class CubeRenderer {
         };
 
         return Object.keys(images).reduce((out, name) => {
-            const mat = new THREE.MeshBasicMaterial({ map: this.texFromFrame(images[name]), transparent: true, opacity: 0.1 });
+            const mat = new THREE.MeshBasicMaterial({ map: this.texFromFrame(images[name]), transparent: true, opacity: 0.3 });
             mat.side = THREE.DoubleSide;
             out[name] = mat;
             return out;
@@ -311,11 +363,10 @@ export default class CubeRenderer {
         this._controls.update();
         this.render();
 
-        this._plane.rotateX(0.005);
-        this._i = this._i || 0;
-        if (this._i++ % 5 == 0 && this._data) {
-            this.slice(this._data);
-        }
+        this._plane.rotateZ(0.005);
+        this._plane.rotateY(0.005);
+
+        this.slice(this._data);
     }
 
     /**

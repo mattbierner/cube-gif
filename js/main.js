@@ -29596,6 +29596,11 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	var blank = [0, 0, 0, 0];
+
+	/**
+	 * Create a plane from 4 points.
+	 */
 	var createPlane = function createPlane(name, a, b, c, d, mat) {
 	    var indices = new Uint32Array([0, 1, 2, 0, 2, 3]);
 
@@ -29612,6 +29617,7 @@
 
 	    var mesh = new _three2.default.Mesh(geometry, mat);
 	    mesh.name = name;
+	    mesh.geometry.vertices = [a, b, c, d];
 	    return mesh;
 	};
 
@@ -29675,12 +29681,21 @@
 	    }, {
 	        key: 'initGeometry',
 	        value: function initGeometry() {
-	            var geometry = new _three2.default.PlaneGeometry(2, 2, 1);
-	            var material = new _three2.default.MeshBasicMaterial({ side: _three2.default.DoubleSide, map: new _three2.default.Texture(), transparent: true, opacity: 1, alphaTest: 0.5 });
-	            this._plane = new _three2.default.Mesh(geometry, material);
-	            this._plane.name = 'plane';
+	            var material = new _three2.default.MeshBasicMaterial({
+	                side: _three2.default.DoubleSide,
+	                map: new _three2.default.Texture(),
+	                transparent: true,
+	                opacity: 1,
+	                alphaTest: 0.5
+	            });
+
+	            var size = 0.5;
+	            this._plane = createPlane('plane', new _three2.default.Vector3(-size, size, 0), new _three2.default.Vector3(size, size, 0), new _three2.default.Vector3(size, -size, 0), new _three2.default.Vector3(-size, -size, 0), material);
+
+	            this._plane.geometry.attributes.uv.array = new Float32Array([1, 0, 0, 0, 0, 1, 1, 1]);
+	            this._plane.geometry.attributes.uv.needsUpdate = true;
 	            this._scene.add(this._plane);
-	            this._plane.rotateX(Math.PI / 2);
+	            this._plane.rotateZ(Math.PI / 4);
 	        }
 
 	        /**
@@ -29719,55 +29734,80 @@
 	        }
 	    }, {
 	        key: 'slice',
-	        value: function slice(imageData) {
+	        value: function slice() {
+	            if (!this._data) return;
+
+	            var sampleWidth = 300;
+	            var sampleHeight = 300;
+
 	            var plane = this._scene.getObjectByName('plane');
-
 	            var vertices = plane.geometry.vertices;
-
 	            var p1 = vertices[0].clone().applyMatrix4(plane.matrix);
 	            var p2 = vertices[1].clone().applyMatrix4(plane.matrix);
-	            var p3 = vertices[2].clone().applyMatrix4(plane.matrix);
+	            var p3 = vertices[3].clone().applyMatrix4(plane.matrix);
 
-	            var l = 100;
+	            var dx = p2.clone().sub(p1).divideScalar(sampleWidth);
+	            var dx2 = dx.clone().divideScalar(2);
+	            var dy = p3.clone().sub(p1).divideScalar(sampleHeight);
 
-	            var dx = p2.clone().sub(p1).divideScalar(l);
-	            var dy = p3.clone().sub(p1).divideScalar(l);
-
-	            var sampledData = (0, _create_image_data2.default)(l, l);
-
-	            var start = p1.clone().add(dy.clone().divideScalar(2));
-	            for (var y = 0; y < l; ++y) {
-	                var startRow = start.clone().add(dx.clone().divideScalar(2));
-	                for (var x = 0; x < l; ++x) {
-	                    var p = startRow;
-	                    this.copyRgba(sampledData.data, x + y * l, this.getSample(imageData, p.x, p.y, p.z), 0);
-	                    startRow.add(dx);
-	                }
-	                start.add(dy);
+	            // Ensure we hvae a large enough texture buffer to write to
+	            if (!plane.material.map.image || plane.material.map.image.width !== sampleWidth || plane.material.map.image.height !== sampleHeight) {
+	                var texture = (0, _create_image_data2.default)(sampleWidth, sampleHeight);
+	                plane.material.map.image = texture;
 	            }
 
-	            var texture = this.texFromFrame(sampledData);
-	            texture.flipY = false;
-	            plane.material.map = texture;
+	            var imageBuffer = plane.material.map.image.data;
+
+	            // Take all the samples
+	            var start = p1.clone().add(dy.clone().divideScalar(2));
+	            for (var y = 0; y < sampleHeight; ++y, start.add(dy)) {
+	                var p = start.clone().add(dx2);
+	                for (var x = 0; x < sampleWidth; ++x, p.add(dx)) {
+	                    this._sampleImageCube(imageBuffer, (x + y * sampleWidth) * 4, p.x, p.y, p.z);
+	                }
+	            }
+
 	            plane.material.map.needsUpdate = true;
 	        }
+
+	        /**
+	         * Samples the the color value of the gif cube at a position in 3D space.
+	         */
+
 	    }, {
-	        key: 'getSample',
-	        value: function getSample(imageData, x, y, z) {
-	            var componentSize = 4;
-	            var size = 0.5;
-	            if (Math.abs(x) > size || Math.abs(y) > size || Math.abs(z) > size) return [0, 0, 0, 0];
-	            x += size;
-	            y += size;
-	            z += size;
-	            var frameIndex = Math.floor(z / (size * 2) * imageData.frames.length);
-	            var frame = imageData.frames[frameIndex];
+	        key: '_sampleImageCube',
+	        value: function _sampleImageCube(dest, destIndex, x, y, z) {
+	            var _imageCube = this._imageCube;
+	            var width = _imageCube.width;
+	            var depth = _imageCube.depth;
+	            var height = _imageCube.height;
 
-	            var u = Math.floor(x / (size * 2) * imageData.width);
-	            var v = Math.floor(y / (size * 2) * imageData.height);
+	            // Shift to positive coordinates to simplify sampling
 
-	            var index = (v * imageData.width + u) * componentSize;
-	            return [frame.data.data[index], frame.data.data[index + 1], frame.data.data[index + 2], 255];
+	            x += this._imageCube.width2;
+	            y += this._imageCube.height2;
+	            z += this._imageCube.depth2;
+
+	            // Check if in cube
+	            if (x < 0 || x > width || y < 0 || y > height || z < 0 || z > depth) {
+	                dest[destIndex++] = 0;
+	                dest[destIndex++] = 0;
+	                dest[destIndex++] = 0;
+	                dest[destIndex++] = 0;
+	                return;
+	            }
+
+	            var frameIndex = Math.floor(z / depth * this._data.frames.length);
+	            var frameData = this._data.frames[frameIndex].data.data;
+
+	            var u = Math.floor(x / width * this._data.width);
+	            var v = Math.floor(y / height * this._data.height);
+
+	            var index = (v * this._data.width + u) * 4;
+	            dest[destIndex++] = frameData[index++];
+	            dest[destIndex++] = frameData[index++];
+	            dest[destIndex++] = frameData[index++];
+	            dest[destIndex++] = 255;
 	        }
 	    }, {
 	        key: 'setGif',
@@ -29776,6 +29816,16 @@
 	            this._data = imageData;
 
 	            var scale = Math.max(imageData.width, imageData.height);
+
+	            this._imageCube = {
+	                width: imageData.width / scale,
+	                height: imageData.height / scale,
+	                depth: 1,
+
+	                width2: imageData.width / scale / 2,
+	                height2: imageData.height / scale / 2,
+	                depth2: 1 / 2
+	            };
 
 	            var w = imageData.width / scale / 2;
 	            var h = imageData.height / scale / 2;
@@ -29907,7 +29957,7 @@
 	            };
 
 	            return Object.keys(images).reduce(function (out, name) {
-	                var mat = new _three2.default.MeshBasicMaterial({ map: _this6.texFromFrame(images[name]), transparent: true, opacity: 0.1 });
+	                var mat = new _three2.default.MeshBasicMaterial({ map: _this6.texFromFrame(images[name]), transparent: true, opacity: 0.3 });
 	                mat.side = _three2.default.DoubleSide;
 	                out[name] = mat;
 	                return out;
@@ -29921,11 +29971,10 @@
 	            this._controls.update();
 	            this.render();
 
-	            this._plane.rotateX(0.005);
-	            this._i = this._i || 0;
-	            if (this._i++ % 5 == 0 && this._data) {
-	                this.slice(this._data);
-	            }
+	            this._plane.rotateZ(0.005);
+	            this._plane.rotateY(0.005);
+
+	            this.slice(this._data);
 	        }
 
 	        /**
