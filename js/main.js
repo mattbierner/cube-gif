@@ -29533,8 +29533,9 @@
 	    _createClass(GifRenderer, [{
 	        key: 'componentDidMount',
 	        value: function componentDidMount() {
-	            this._canvas = _reactDom2.default.findDOMNode(this);
-	            this._renderer = new _d_renderer2.default(this._canvas);
+	            var element = _reactDom2.default.findDOMNode(this);
+	            this._3dCanvas = element.getElementsByClassName('3d-canvas')[0];
+	            this._renderer = new _d_renderer2.default(this._3dCanvas, this.onSampleDidChange.bind(this));
 
 	            if (this.props.imageData) {
 	                this._renderer.setGif(this.props.imageData, this.props);
@@ -29543,6 +29544,9 @@
 	            if (this.props.onRendererLoaded) this.props.onRendererLoaded(this._renderer);
 
 	            this._renderer.render();
+
+	            this._2dCanvas = element.getElementsByClassName('2d-canvas')[0];
+	            this._ctx = this._2dCanvas.getContext('2d');
 	        }
 	    }, {
 	        key: 'componentWillReceiveProps',
@@ -29552,9 +29556,23 @@
 	            }
 	        }
 	    }, {
+	        key: 'onSampleDidChange',
+	        value: function onSampleDidChange(imageData) {
+	            // this.props.imageData
+	            this._2dCanvas.width = imageData.width;
+
+	            this._2dCanvas.height = imageData.height;
+	            this._ctx.putImageData(imageData, 0, 0);
+	        }
+	    }, {
 	        key: 'render',
 	        value: function render() {
-	            return _react2.default.createElement('canvas', { className: 'gif-canvas' });
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                _react2.default.createElement('canvas', { className: '3d-canvas' }),
+	                _react2.default.createElement('canvas', { className: '2d-canvas', width: '200', height: '200' })
+	            );
 	        }
 	    }]);
 
@@ -29592,11 +29610,15 @@
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
+	var _cube_shader = __webpack_require__(217);
+
+	var _cube_shader2 = _interopRequireDefault(_cube_shader);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var blank = [0, 0, 0, 0];
+	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_shader2.default);
 
 	/**
 	 * Create a plane from 4 points.
@@ -29621,14 +29643,19 @@
 	    return mesh;
 	};
 
+	/**
+	 * 
+	 */
+
 	var CubeRenderer = function () {
-	    function CubeRenderer(canvas) {
+	    function CubeRenderer(canvas, delegate) {
 	        var _this = this;
 
 	        _classCallCheck(this, CubeRenderer);
 
 	        this._frames = [];
 	        this._options = {};
+	        this._delegate = delegate;
 
 	        this._scene = new _three2.default.Scene();
 
@@ -29651,6 +29678,7 @@
 	            this._renderer = new _three2.default.WebGLRenderer({
 	                canvas: canvas
 	            });
+	            this._renderer.localClippingEnabled = true;
 	            this._renderer.setClearColor(0xffffff, 0);
 	            this._renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
 	        }
@@ -29689,13 +29717,15 @@
 	                alphaTest: 0.5
 	            });
 
-	            var size = 0.5;
+	            var size = 1;
 	            this._plane = createPlane('plane', new _three2.default.Vector3(-size, size, 0), new _three2.default.Vector3(size, size, 0), new _three2.default.Vector3(size, -size, 0), new _three2.default.Vector3(-size, -size, 0), material);
 
-	            this._plane.geometry.attributes.uv.array = new Float32Array([1, 0, 0, 0, 0, 1, 1, 1]);
+	            this._plane.geometry.attributes.uv.array = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
 	            this._plane.geometry.attributes.uv.needsUpdate = true;
 	            this._scene.add(this._plane);
-	            this._plane.rotateZ(Math.PI / 4);
+
+	            var edges = new _three2.default.EdgesHelper(this._plane, '#ffffff');
+	            this._scene.add(edges);
 	        }
 
 	        /**
@@ -29705,32 +29735,7 @@
 	    }, {
 	        key: 'clear',
 	        value: function clear() {
-	            var targets = ['left', 'right', 'top', 'bottom', 'front', 'back'];
-	            var _iteratorNormalCompletion = true;
-	            var _didIteratorError = false;
-	            var _iteratorError = undefined;
-
-	            try {
-	                for (var _iterator = targets[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	                    var name = _step.value;
-
-	                    var obj = this._scene.getObjectByName(name);
-	                    this._scene.remove(obj);
-	                }
-	            } catch (err) {
-	                _didIteratorError = true;
-	                _iteratorError = err;
-	            } finally {
-	                try {
-	                    if (!_iteratorNormalCompletion && _iterator.return) {
-	                        _iterator.return();
-	                    }
-	                } finally {
-	                    if (_didIteratorError) {
-	                        throw _iteratorError;
-	                    }
-	                }
-	            }
+	            this._scene.remove(this._cube);
 	        }
 	    }, {
 	        key: 'slice',
@@ -29768,6 +29773,8 @@
 	            }
 
 	            plane.material.map.needsUpdate = true;
+
+	            this._delegate(plane.material.map.image);
 	        }
 
 	        /**
@@ -29787,6 +29794,10 @@
 	            x += this._imageCube.width2;
 	            y += this._imageCube.height2;
 	            z += this._imageCube.depth2;
+
+	            // Invert for sampling so we sample in HTML ImageData/canvas order
+	            y = this._imageCube.height - y;
+	            z = this._imageCube.depth - z;
 
 	            // Check if in cube
 	            if (x < 0 || x > width || y < 0 || y > height || z < 0 || z > depth) {
@@ -29832,17 +29843,47 @@
 	            var d = 0.5;
 	            var faces = this._getFaceImages(imageData);
 
-	            this._scene.add(createPlane('front', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.front));
+	            this._cube = new _three2.default.Object3D();
 
-	            this._scene.add(createPlane('right', new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), faces.right));
+	            this._cube.add(createPlane('front', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.front));
 
-	            this._scene.add(createPlane('back', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(-w, h, -d), faces.back));
+	            this._cube.add(createPlane('right', new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), faces.right));
 
-	            this._scene.add(createPlane('left', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(-w, h, d), faces.left));
+	            this._cube.add(createPlane('back', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(-w, h, -d), faces.back));
 
-	            this._scene.add(createPlane('top', new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.top));
+	            this._cube.add(createPlane('left', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(-w, h, d), faces.left));
 
-	            this._scene.add(createPlane('bottom', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(-w, -h, d), faces.bottom));
+	            this._cube.add(createPlane('top', new _three2.default.Vector3(-w, h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.top));
+
+	            this._cube.add(createPlane('bottom', new _three2.default.Vector3(-w, -h, -d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(-w, -h, d), faces.bottom));
+
+	            this._scene.add(this._cube);
+
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = this._cube.children.slice()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var child = _step.value;
+
+	                    var edges = new _three2.default.EdgesHelper(child, '#777777');
+	                    this._cube.add(edges);
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
+	            }
 
 	            this.slice(imageData);
 	        }
@@ -29957,24 +29998,45 @@
 	            };
 
 	            return Object.keys(images).reduce(function (out, name) {
-	                var mat = new _three2.default.MeshBasicMaterial({ map: _this6.texFromFrame(images[name]), transparent: true, opacity: 0.3 });
-	                mat.side = _three2.default.DoubleSide;
+	                var mat = cubeMaterial.clone();
+	                mat.uniforms.tDiffuse.value = _this6.texFromFrame(images[name]);
+	                mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
 	                out[name] = mat;
 	                return out;
 	            }, {});
 	        }
+
+	        /**
+	         * Main render loop function.
+	         */
+
 	    }, {
 	        key: 'animateImpl',
 	        value: function animateImpl() {
 	            requestAnimationFrame(this.animate);
 
-	            this._controls.update();
+	            this.update();
 	            this.render();
 
-	            this._plane.rotateZ(0.005);
-	            this._plane.rotateY(0.005);
+	            //  this._plane.rotateZ(0.002);
+	            // this._plane.rotateY(0.002);
 
 	            this.slice(this._data);
+	        }
+	    }, {
+	        key: 'update',
+	        value: function update() {
+	            this._controls.update();
+
+	            if (!this._cube) return;
+
+	            var plane = this._scene.getObjectByName('plane');
+	            var clippingPlane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0).applyMatrix4(plane.matrix);
+	            cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
+	            cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
+	            cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
+	            cubeMaterial.uniforms.clippingPlane.value.w = clippingPlane.constant;
+	            cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
 	        }
 
 	        /**
@@ -34270,6 +34332,33 @@
 	        out.push(x);
 	    }
 	    return out;
+	};
+
+/***/ },
+/* 217 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(214);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
+	        tDiffuse: { type: 't' }
+	    },
+	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n            //color.a = mix(1.0, 0.2, float(dot(eyePos, clippingPlane.xyz) > clippingPlane.w));\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
 	};
 
 /***/ }

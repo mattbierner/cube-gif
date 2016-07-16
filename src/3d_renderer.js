@@ -4,7 +4,10 @@ import OrbitControls from './OrbitControls';
 import gen_array from './gen_array';
 import createImageData from './create_image_data';
 
-const blank = [0, 0, 0, 0];
+import cubeShader from './cube_shader';
+
+const cubeMaterial = new THREE.ShaderMaterial(cubeShader);
+
 
 /**
  * Create a plane from 4 points.
@@ -40,10 +43,14 @@ const createPlane = (name, a, b, c, d, mat) => {
 };
 
 
+/**
+ * 
+ */
 export default class CubeRenderer {
-    constructor(canvas) {
+    constructor(canvas, delegate) {
         this._frames = [];
         this._options = {};
+        this._delegate = delegate;
 
         this._scene = new THREE.Scene();
 
@@ -60,8 +67,9 @@ export default class CubeRenderer {
 
     initRenderer(canvas) {
         this._renderer = new THREE.WebGLRenderer({
-            canvas: canvas
+            canvas: canvas,
         });
+        this._renderer.localClippingEnabled = true;
         this._renderer.setClearColor(0xffffff, 0);
         this._renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
     }
@@ -96,33 +104,30 @@ export default class CubeRenderer {
             alphaTest: 0.5
         });
 
-        const size = 0.5;
+        const size = 1;
         this._plane = createPlane('plane',
             new THREE.Vector3(-size, size, 0), new THREE.Vector3(size, size, 0),
             new THREE.Vector3(size, -size, 0), new THREE.Vector3(-size, -size, 0),
             material);
 
         this._plane.geometry.attributes.uv.array = new Float32Array([
-            1, 0,
-            0, 0,
             0, 1,
             1, 1,
+            1, 0,
+            0, 0,
         ]);
         this._plane.geometry.attributes.uv.needsUpdate = true;
         this._scene.add(this._plane);
-        this._plane.rotateZ(Math.PI / 4);
 
+        const edges = new THREE.EdgesHelper(this._plane , '#ffffff');
+        this._scene.add(edges); 
     }
 
     /**
      * Remove all objects from the current scene.
      */
     clear() {
-        const targets = ['left', 'right', 'top', 'bottom', 'front', 'back'];
-        for (const name of targets) {
-            const obj = this._scene.getObjectByName(name);
-            this._scene.remove(obj);
-        }
+        this._scene.remove(this._cube);
     }
 
     slice() {
@@ -160,6 +165,8 @@ export default class CubeRenderer {
         }
 
         plane.material.map.needsUpdate = true;
+
+        this._delegate(plane.material.map.image);
     }
 
     /**
@@ -172,6 +179,10 @@ export default class CubeRenderer {
         x += this._imageCube.width2;
         y += this._imageCube.height2;
         z += this._imageCube.depth2;
+
+        // Invert for sampling so we sample in HTML ImageData/canvas order
+        y = this._imageCube.height - y;
+        z = this._imageCube.depth - z;
 
         // Check if in cube
         if (x < 0 || x > width || y < 0 || y > height || z < 0 || z > depth) {
@@ -216,35 +227,44 @@ export default class CubeRenderer {
         const d = 0.5;
         const faces = this._getFaceImages(imageData);
 
-        this._scene.add(
+        this._cube = new THREE.Object3D();
+
+        this._cube.add(
             createPlane('front',
                 new THREE.Vector3(-w, -h, d), new THREE.Vector3(w, -h, d), new THREE.Vector3(w, h, d), new THREE.Vector3(-w, h, d),
                 faces.front));
 
-        this._scene.add(
+        this._cube.add(
             createPlane('right',
                 new THREE.Vector3(w, -h, d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(w, h, d),
                 faces.right));
 
-        this._scene.add(
+        this._cube.add(
             createPlane('back',
                 new THREE.Vector3(-w, -h, -d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(-w, h, -d),
                 faces.back));
 
-        this._scene.add(
+        this._cube.add(
             createPlane('left',
                 new THREE.Vector3(-w, -h, d), new THREE.Vector3(-w, -h, -d), new THREE.Vector3(-w, h, -d), new THREE.Vector3(-w, h, d),
                 faces.left));
 
-        this._scene.add(
+        this._cube.add(
             createPlane('top',
                 new THREE.Vector3(-w, h, -d), new THREE.Vector3(w, h, -d), new THREE.Vector3(w, h, d), new THREE.Vector3(-w, h, d),
                 faces.top));
 
-        this._scene.add(
+        this._cube.add(
             createPlane('bottom',
                 new THREE.Vector3(-w, -h, -d), new THREE.Vector3(w, -h, -d), new THREE.Vector3(w, -h, d), new THREE.Vector3(-w, -h, d),
                 faces.bottom));
+
+        this._scene.add(this._cube);
+
+        for (const child of this._cube.children.slice()) {
+            const edges = new THREE.EdgesHelper(child , '#777777');
+            this._cube.add(edges); 
+        }
 
         this.slice(imageData)
     }
@@ -349,24 +369,42 @@ export default class CubeRenderer {
         };
 
         return Object.keys(images).reduce((out, name) => {
-            const mat = new THREE.MeshBasicMaterial({ map: this.texFromFrame(images[name]), transparent: true, opacity: 0.3 });
-            mat.side = THREE.DoubleSide;
+            const mat = cubeMaterial.clone();
+            mat.uniforms.tDiffuse.value = this.texFromFrame(images[name]);
+            mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
             out[name] = mat;
             return out;
         }, {});
     }
 
-
+    /**
+     * Main render loop function.
+     */
     animateImpl() {
         requestAnimationFrame(this.animate);
 
-        this._controls.update();
+        this.update()
         this.render();
 
-        this._plane.rotateZ(0.005);
-        this._plane.rotateY(0.005);
+      //  this._plane.rotateZ(0.002);
+       // this._plane.rotateY(0.002);
 
         this.slice(this._data);
+    }
+
+    update() {
+        this._controls.update();
+
+        if (!this._cube)
+            return;
+
+        const plane = this._scene.getObjectByName('plane');
+        const clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0).applyMatrix4(plane.matrix);
+        cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
+        cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
+        cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
+        cubeMaterial.uniforms.clippingPlane.value.w = clippingPlane.constant;
+        cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
     }
 
     /**
