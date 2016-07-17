@@ -28505,7 +28505,11 @@
 	        _this.state = {
 	            imageData: null,
 	            loadingGif: false,
-	            exporting: false
+	            exporting: false,
+
+	            // sampling
+	            sampleWidth: 1,
+	            sampleHeight: 1
 	        };
 	        return _this;
 	    }
@@ -28531,10 +28535,15 @@
 	            (0, _load_gif2.default)(file).then(function (data) {
 	                if (file !== _this2.props.file) return;
 
+	                var sampleSize = Math.max(data.width * 2, data.height * 2);
 	                _this2.setState({
 	                    imageData: data,
 	                    loadingGif: false,
-	                    error: null
+	                    error: null,
+
+	                    // sampling
+	                    sampleWidth: sampleSize,
+	                    sampleHeight: sampleSize
 	                });
 	            }).catch(function (e) {
 	                if (file !== _this2.props.file) return;
@@ -28553,7 +28562,7 @@
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'gif-viewer', id: 'viewer' },
-	                _react2.default.createElement(_gif_renderer2.default, { imageData: this.state.imageData })
+	                _react2.default.createElement(_gif_renderer2.default, this.state)
 	            );
 	        }
 	    }]);
@@ -29537,10 +29546,7 @@
 	            if (this.props.imageData) {
 	                this._renderer.setGif(this.props.imageData, this.props);
 	            }
-
-	            if (this.props.onRendererLoaded) this.props.onRendererLoaded(this._renderer);
-
-	            this._renderer.render();
+	            this._renderer.setSampleSize(this.props.sampleWidth, this.props.sampleHeight);
 
 	            this._2dCanvas = element.getElementsByClassName('slice-canvas')[0];
 	            this._ctx = this._2dCanvas.getContext('2d');
@@ -29550,6 +29556,10 @@
 	        value: function componentWillReceiveProps(newProps) {
 	            if (this.props.imageData !== newProps.imageData) {
 	                this._renderer.setGif(newProps.imageData);
+	            }
+
+	            if (this.props.sampleWidth !== newProps.sampleWidth || this.props.sampleHeight !== newProps.sampleHeight) {
+	                this._renderer.setSampleSize(newProps.sampleWidth, newProps.sampleHeight);
 	            }
 	        }
 
@@ -29626,9 +29636,13 @@
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
-	var _cube_shader = __webpack_require__(220);
+	var _cube_face_shader = __webpack_require__(223);
 
-	var _cube_shader2 = _interopRequireDefault(_cube_shader);
+	var _cube_face_shader2 = _interopRequireDefault(_cube_face_shader);
+
+	var _cube_volume_shader = __webpack_require__(224);
+
+	var _cube_volume_shader2 = _interopRequireDefault(_cube_volume_shader);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29636,9 +29650,9 @@
 
 	var ResizeSensor = __webpack_require__(221);
 
-	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_shader2.default);
+	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_face_shader2.default);
 
-	var cameraBase = 3;
+	var cameraBase = 1;
 
 	/**
 	 * Create a plane from 4 points.
@@ -29810,15 +29824,20 @@
 	        value: function clear() {
 	            this._scene.remove(this._cube);
 	        }
+
+	        /**
+	         * 
+	         */
+
 	    }, {
 	        key: 'slice',
 	        value: function slice() {
 	            if (!this._data) return;
 
-	            var sampleWidth = 300;
-	            var sampleHeight = 300;
+	            var sampleWidth = this._sampleWidth;
+	            var sampleHeight = this._sampleHeight;
 
-	            var plane = this._scene.getObjectByName('plane');
+	            var plane = this._plane;
 	            var vertices = plane.geometry.vertices;
 	            var p1 = vertices[0].clone().applyMatrix4(plane.matrix);
 	            var p2 = vertices[1].clone().applyMatrix4(plane.matrix);
@@ -29893,6 +29912,11 @@
 	            dest[destIndex++] = frameData[index++];
 	            dest[destIndex++] = 255;
 	        }
+
+	        /**
+	         * 
+	         */
+
 	    }, {
 	        key: 'setGif',
 	        value: function setGif(imageData, options) {
@@ -29913,7 +29937,7 @@
 
 	            var w = imageData.width / scale / 2;
 	            var h = imageData.height / scale / 2;
-	            var d = 0.5;
+	            var d = 1 / 2;
 	            var faces = this._getFaceImages(imageData);
 
 	            this._cube = new _three2.default.Object3D();
@@ -29932,6 +29956,7 @@
 
 	            this._scene.add(this._cube);
 
+	            // Create outlines
 	            var _iteratorNormalCompletion = true;
 	            var _didIteratorError = false;
 	            var _iteratorError = undefined;
@@ -29958,7 +29983,21 @@
 	                }
 	            }
 
-	            this.slice(imageData);
+	            var g2 = new _three2.default.BoxGeometry(this._imageCube.width - 0.01, this._imageCube.height - 0.01, this._imageCube.depth - 0.01);
+	            var mat = new _three2.default.ShaderMaterial(_cube_volume_shader2.default);
+	            mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
+
+	            var mesh = new _three2.default.Mesh(g2, mat);
+	            this._scene.add(mesh);
+
+	            this._needsSlice = true;
+	        }
+	    }, {
+	        key: 'setSampleSize',
+	        value: function setSampleSize(width, height) {
+	            this._sampleWidth = width;
+	            this._sampleHeight = height;
+	            this._needsSlice = true;
 	        }
 	    }, {
 	        key: 'texFromFrame',
@@ -30113,8 +30152,7 @@
 
 	            if (!this._cube) return;
 
-	            var plane = this._scene.getObjectByName('plane');
-	            var clippingPlane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0).applyMatrix4(plane.matrix);
+	            var clippingPlane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0).applyMatrix4(this._plane.matrix);
 	            cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
 	            cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
 	            cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
@@ -35933,33 +35971,7 @@
 	};
 
 /***/ },
-/* 220 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _three = __webpack_require__(214);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = {
-	    uniforms: {
-	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
-	        tDiffuse: { type: 't' }
-	    },
-	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
-	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n            //color.a = mix(1.0, 0.2, float(dot(eyePos, clippingPlane.xyz) > clippingPlane.w));\n            gl_FragColor = color;\n        }\n    ',
-	    side: _three2.default.DoubleSide,
-	    transparent: true
-	};
-
-/***/ },
+/* 220 */,
 /* 221 */
 /***/ function(module, exports) {
 
@@ -36134,6 +36146,63 @@
 	    }
 	})();
 	}.call(window));
+
+/***/ },
+/* 222 */,
+/* 223 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(214);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
+	        tDiffuse: { type: 't' }
+	    },
+	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
+	};
+
+/***/ },
+/* 224 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(214);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	/**
+	 * Shader for the interior of the gif cube.
+	 */
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) }
+	    },
+	    vertexShader: '\n        varying vec3 eyePos;\n\n        void main() {\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n\n            vec4 color = vec4(0.9, 0.9, 0.9, 1.0);\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
+	};
 
 /***/ }
 /******/ ]);

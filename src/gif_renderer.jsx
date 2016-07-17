@@ -16,11 +16,8 @@ export default class GifRenderer extends React.Component {
         if (this.props.imageData) {
             this._renderer.setGif(this.props.imageData, this.props);
         }
+        this._renderer.setSampleSize(this.props.sampleWidth, this.props.sampleHeight);
 
-        if (this.props.onRendererLoaded)
-            this.props.onRendererLoaded(this._renderer);
-
-        this._renderer.render();
 
         this._2dCanvas = element.getElementsByClassName('slice-canvas')[0];
         this._ctx = this._2dCanvas.getContext('2d');
@@ -29,6 +26,10 @@ export default class GifRenderer extends React.Component {
     componentWillReceiveProps(newProps) {
         if (this.props.imageData !== newProps.imageData) {
             this._renderer.setGif(newProps.imageData);
+        }
+
+        if (this.props.sampleWidth !== newProps.sampleWidth || this.props.sampleHeight !== newProps.sampleHeight) {
+            this._renderer.setSampleSize(newProps.sampleWidth, newProps.sampleHeight);
         }
     }
 

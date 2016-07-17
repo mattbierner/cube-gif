@@ -15,6 +15,10 @@ export default class Viewer extends React.Component {
             imageData: null,
             loadingGif: false,
             exporting: false,
+
+            // sampling
+            sampleWidth: 1,
+            sampleHeight: 1
         };
     }
 
@@ -35,10 +39,15 @@ export default class Viewer extends React.Component {
                 if (file !== this.props.file)
                     return;
 
+                const sampleSize = Math.max(data.width * 2, data.height * 2);
                 this.setState({
                     imageData: data,
                     loadingGif: false,
                     error: null,
+
+                    // sampling
+                    sampleWidth: sampleSize,
+                    sampleHeight: sampleSize
                 });
             })
             .catch(e => {
@@ -57,7 +66,9 @@ export default class Viewer extends React.Component {
     render() {
         return (
             <div className="gif-viewer" id="viewer">
-                <GifRenderer imageData={this.state.imageData} />
-            </div>);
+                <GifRenderer {...this.state} />
+            </div>
+            
+        );
     }
 }

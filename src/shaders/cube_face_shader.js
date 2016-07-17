@@ -28,7 +28,7 @@ export default {
             if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)
                 discard;
             vec4 color = texture2D(tDiffuse, vUv);
-            //color.a = mix(1.0, 0.2, float(dot(eyePos, clippingPlane.xyz) > clippingPlane.w));
+
             gl_FragColor = color;
         }
     `,
