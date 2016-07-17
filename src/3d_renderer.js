@@ -58,7 +58,7 @@ export default class CubeRenderer {
         this._uiScene = new THREE.Scene();
 
         this.initRenderer(canvas);
-        this.initCamera();
+        this.initCamera(3, 3);
         this.initControls(canvas);
         this.resize(500, 500);
 
@@ -79,8 +79,11 @@ export default class CubeRenderer {
     }
 
     initCamera(width, height) {
-        this._camera = new THREE.PerspectiveCamera(75, 0.5, 0.01, 800);
-        this._camera.position.z = 5;
+        this._camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, -10, 10 );
+        this._camera.position.z = 1;
+        this._camera.position.x = 1;
+        this._camera.position.y = 1;
+
     }
 
     initControls(container) {
@@ -88,10 +91,13 @@ export default class CubeRenderer {
         this._controls.enableDamping = true;
         this._controls.dampingFactor = 0.25;
         this._controls.enableZoom = true;
+         this._controls.minZoom = 0.01;
+         this._controls.maxZoom = 20;
 
         // Create transform controls
         this._transformControls = new TransformControls(this._camera, container);
-        this._transformControls.setSize(0.50);
+        this._transformControls.setSize(1);
+        this._transformControls.setSpace('local');
         this._uiScene.add(this._transformControls);
 
         window.addEventListener('keydown', (event) => {
@@ -118,8 +124,6 @@ export default class CubeRenderer {
     resize(width, height) {
         this._width = width;
         this._height = height;
-        this._camera.aspect = width / height;
-        this._camera.updateProjectionMatrix();
 
         this._renderer.setSize(width, height);
     }
@@ -145,10 +149,12 @@ export default class CubeRenderer {
             0, 0,
         ]);
         this._plane.geometry.attributes.uv.needsUpdate = true;
-        this._scene.add(this._plane);
 
         const edges = new THREE.EdgesHelper(this._plane, '#333333');
         this._scene.add(edges);
+
+        this._plane.rotateOnAxis(new THREE.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
+        this._scene.add(this._plane);
 
         this._transformControls.attach(this._plane);
     }
@@ -416,9 +422,9 @@ export default class CubeRenderer {
         this.update()
         this.render();
 
-        //  this._plane.rotateZ(0.002);
-        // this._plane.rotateY(0.002);
-
+       //  this._plane.rotateZ(0.002);
+         //this._plane.rotateY(0.002);
+         //this._needsSlice = true;
         this._slicer = this._slicer || throttle(() => this.slice(this._data), 50);
 
         if (this._needsSlice) {

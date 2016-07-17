@@ -29602,15 +29602,15 @@
 
 	var _OrbitControls2 = _interopRequireDefault(_OrbitControls);
 
-	var _TransformControls = __webpack_require__(218);
+	var _TransformControls = __webpack_require__(216);
 
 	var _TransformControls2 = _interopRequireDefault(_TransformControls);
 
-	var _lodash = __webpack_require__(221);
+	var _lodash = __webpack_require__(217);
 
 	var _lodash2 = _interopRequireDefault(_lodash);
 
-	var _gen_array = __webpack_require__(216);
+	var _gen_array = __webpack_require__(219);
 
 	var _gen_array2 = _interopRequireDefault(_gen_array);
 
@@ -29618,7 +29618,7 @@
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
-	var _cube_shader = __webpack_require__(217);
+	var _cube_shader = __webpack_require__(220);
 
 	var _cube_shader2 = _interopRequireDefault(_cube_shader);
 
@@ -29669,7 +29669,7 @@
 	        this._uiScene = new _three2.default.Scene();
 
 	        this.initRenderer(canvas);
-	        this.initCamera();
+	        this.initCamera(3, 3);
 	        this.initControls(canvas);
 	        this.resize(500, 500);
 
@@ -29695,8 +29695,10 @@
 	    }, {
 	        key: 'initCamera',
 	        value: function initCamera(width, height) {
-	            this._camera = new _three2.default.PerspectiveCamera(75, 0.5, 0.01, 800);
-	            this._camera.position.z = 5;
+	            this._camera = new _three2.default.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -10, 10);
+	            this._camera.position.z = 1;
+	            this._camera.position.x = 1;
+	            this._camera.position.y = 1;
 	        }
 	    }, {
 	        key: 'initControls',
@@ -29707,10 +29709,13 @@
 	            this._controls.enableDamping = true;
 	            this._controls.dampingFactor = 0.25;
 	            this._controls.enableZoom = true;
+	            this._controls.minZoom = 0.01;
+	            this._controls.maxZoom = 20;
 
 	            // Create transform controls
 	            this._transformControls = new _TransformControls2.default(this._camera, container);
-	            this._transformControls.setSize(0.50);
+	            this._transformControls.setSize(1);
+	            this._transformControls.setSpace('local');
 	            this._uiScene.add(this._transformControls);
 
 	            window.addEventListener('keydown', function (event) {
@@ -29741,8 +29746,6 @@
 	        value: function resize(width, height) {
 	            this._width = width;
 	            this._height = height;
-	            this._camera.aspect = width / height;
-	            this._camera.updateProjectionMatrix();
 
 	            this._renderer.setSize(width, height);
 	        }
@@ -29761,10 +29764,12 @@
 
 	            this._plane.geometry.attributes.uv.array = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
 	            this._plane.geometry.attributes.uv.needsUpdate = true;
-	            this._scene.add(this._plane);
 
 	            var edges = new _three2.default.EdgesHelper(this._plane, '#333333');
 	            this._scene.add(edges);
+
+	            this._plane.rotateOnAxis(new _three2.default.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
+	            this._scene.add(this._plane);
 
 	            this._transformControls.attach(this._plane);
 	        }
@@ -30062,8 +30067,8 @@
 	            this.render();
 
 	            //  this._plane.rotateZ(0.002);
-	            // this._plane.rotateY(0.002);
-
+	            //this._plane.rotateY(0.002);
+	            //this._needsSlice = true;
 	            this._slicer = this._slicer || (0, _lodash2.default)(function () {
 	                return _this8.slice(_this8._data);
 	            }, 50);
@@ -33549,7 +33554,7 @@
 
 				spherical.radius *= scale;
 
-				scope.object.zoom = spherical.radius;
+				//  scope.object.zoom = spherical.radius;
 
 				// restrict radius to be between desired limits
 				spherical.radius = Math.max(scope.minDistance, Math.min(scope.maxDistance, spherical.radius));
@@ -34369,54 +34374,6 @@
 
 /***/ },
 /* 216 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	/**
-	 * Generate an array of `x` repeated `arraySize` times
-	 */
-
-	exports.default = function (arraySize, x) {
-	    var out = [];
-	    for (var i = 0; i < arraySize; ++i) {
-	        out.push(x);
-	    }
-	    return out;
-	};
-
-/***/ },
-/* 217 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _three = __webpack_require__(214);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = {
-	    uniforms: {
-	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
-	        tDiffuse: { type: 't' }
-	    },
-	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
-	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n            //color.a = mix(1.0, 0.2, float(dot(eyePos, clippingPlane.xyz) > clippingPlane.w));\n            gl_FragColor = color;\n        }\n    ',
-	    side: _three2.default.DoubleSide,
-	    transparent: true
-	};
-
-/***/ },
-/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35420,9 +35377,7 @@
 	      */
 
 /***/ },
-/* 219 */,
-/* 220 */,
-/* 221 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35437,7 +35392,7 @@
 	 * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var debounce = __webpack_require__(222);
+	var debounce = __webpack_require__(218);
 
 	/** Used as the `TypeError` message for "Functions" methods. */
 	var FUNC_ERROR_TEXT = 'Expected a function';
@@ -35531,7 +35486,7 @@
 	module.exports = throttle;
 
 /***/ },
-/* 222 */
+/* 218 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -35928,6 +35883,54 @@
 	}
 
 	module.exports = debounce;
+
+/***/ },
+/* 219 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	/**
+	 * Generate an array of `x` repeated `arraySize` times
+	 */
+
+	exports.default = function (arraySize, x) {
+	    var out = [];
+	    for (var i = 0; i < arraySize; ++i) {
+	        out.push(x);
+	    }
+	    return out;
+	};
+
+/***/ },
+/* 220 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(214);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
+	        tDiffuse: { type: 't' }
+	    },
+	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n            //color.a = mix(1.0, 0.2, float(dot(eyePos, clippingPlane.xyz) > clippingPlane.w));\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
+	};
 
 /***/ }
 /******/ ]);
