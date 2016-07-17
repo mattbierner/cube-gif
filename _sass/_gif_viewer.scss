@@ -1,13 +1,29 @@
-.gif-viewer {
+.gif-renderer {
     display: flex;
-    justify-content: center;
-    align-content: center;
-    margin-bottom: 3em;
-    -webkit-user-select: none;
+    width: 100%;
     user-select: none;
+
+    .three-container {
+        min-width: 70%;
+        flex-grow: 1;
+    }
+    .slice-container {
+        max-width: 30%;
+    }
+
+    & > * {
+        border: 1px solid red;
+    }
 }
 
-.gif-canvas {
+.three-container {
+    canvas {
+        width: 100% !important;
+        max-height: 100vh;
+    }
+}
+
+.gif-renderer .slice-canvas {
     max-width: 100% !important;
     height: auto !important;
 }

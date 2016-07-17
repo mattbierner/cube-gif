@@ -28553,11 +28553,7 @@
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'gif-viewer', id: 'viewer' },
-	                _react2.default.createElement(
-	                    'div',
-	                    { className: 'player-wrapper' },
-	                    _react2.default.createElement(_gif_renderer2.default, { imageData: this.state.imageData })
-	                )
+	                _react2.default.createElement(_gif_renderer2.default, { imageData: this.state.imageData })
 	            );
 	        }
 	    }]);
@@ -29534,8 +29530,9 @@
 	        key: 'componentDidMount',
 	        value: function componentDidMount() {
 	            var element = _reactDom2.default.findDOMNode(this);
-	            this._3dCanvas = element.getElementsByClassName('3d-canvas')[0];
-	            this._renderer = new _d_renderer2.default(this._3dCanvas, this.onSampleDidChange.bind(this));
+	            var container = element.getElementsByClassName('three-container')[0];
+	            this._3dCanvas = element.getElementsByClassName('three-canvas')[0];
+	            this._renderer = new _d_renderer2.default(this._3dCanvas, container, this.onSampleDidChange.bind(this));
 
 	            if (this.props.imageData) {
 	                this._renderer.setGif(this.props.imageData, this.props);
@@ -29545,7 +29542,7 @@
 
 	            this._renderer.render();
 
-	            this._2dCanvas = element.getElementsByClassName('2d-canvas')[0];
+	            this._2dCanvas = element.getElementsByClassName('slice-canvas')[0];
 	            this._ctx = this._2dCanvas.getContext('2d');
 	        }
 	    }, {
@@ -29555,12 +29552,15 @@
 	                this._renderer.setGif(newProps.imageData);
 	            }
 	        }
+
+	        /**
+	         * Update 2d canvas when image changes.
+	         */
+
 	    }, {
 	        key: 'onSampleDidChange',
 	        value: function onSampleDidChange(imageData) {
-	            // this.props.imageData
 	            this._2dCanvas.width = imageData.width;
-
 	            this._2dCanvas.height = imageData.height;
 	            this._ctx.putImageData(imageData, 0, 0);
 	        }
@@ -29569,9 +29569,17 @@
 	        value: function render() {
 	            return _react2.default.createElement(
 	                'div',
-	                null,
-	                _react2.default.createElement('canvas', { className: '3d-canvas' }),
-	                _react2.default.createElement('canvas', { className: '2d-canvas', width: '200', height: '200' })
+	                { className: 'gif-renderer' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'three-container' },
+	                    _react2.default.createElement('canvas', { className: 'three-canvas' })
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'slice-container' },
+	                    _react2.default.createElement('canvas', { className: 'slice-canvas', width: '200', height: '200' })
+	                )
 	            );
 	        }
 	    }]);
@@ -29626,7 +29634,11 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	var ResizeSensor = __webpack_require__(221);
+
 	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_shader2.default);
+
+	var cameraBase = 3;
 
 	/**
 	 * Create a plane from 4 points.
@@ -29656,7 +29668,7 @@
 	 */
 
 	var CubeRenderer = function () {
-	    function CubeRenderer(canvas, delegate) {
+	    function CubeRenderer(canvas, container, delegate) {
 	        var _this = this;
 
 	        _classCallCheck(this, CubeRenderer);
@@ -29664,14 +29676,16 @@
 	        this._frames = [];
 	        this._options = {};
 	        this._delegate = delegate;
+	        this._container = container;
 
 	        this._scene = new _three2.default.Scene();
 	        this._uiScene = new _three2.default.Scene();
 
 	        this.initRenderer(canvas);
-	        this.initCamera(3, 3);
+	        this.initCamera(cameraBase, cameraBase);
 	        this.initControls(canvas);
-	        this.resize(500, 500);
+	        new ResizeSensor(this._container, this.onResize.bind(this));
+	        this.onResize();
 
 	        this.initGeometry();
 
@@ -29742,12 +29756,25 @@
 	            });
 	        }
 	    }, {
-	        key: 'resize',
-	        value: function resize(width, height) {
+	        key: 'onResize',
+	        value: function onResize() {
+	            var _container$getBoundin = this._container.getBoundingClientRect();
+
+	            var width = _container$getBoundin.width;
+	            var height = _container$getBoundin.height;
+
+
 	            this._width = width;
 	            this._height = height;
 
 	            this._renderer.setSize(width, height);
+
+	            var aspect = width / height;
+	            this._camera.left = -cameraBase * aspect;
+	            this._camera.right = cameraBase * aspect;
+	            this._camera.top = cameraBase;
+	            this._camera.bottom = -cameraBase;
+	            this._camera.updateProjectionMatrix();
 	        }
 	    }, {
 	        key: 'initGeometry',
@@ -35931,6 +35958,182 @@
 	    side: _three2.default.DoubleSide,
 	    transparent: true
 	};
+
+/***/ },
+/* 221 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	(function() {
+
+	'use strict';
+
+	/**
+	 * Copyright Marc J. Schmidt. See the LICENSE file at the top-level
+	 * directory of this distribution and at
+	 * https://github.com/marcj/css-element-queries/blob/master/LICENSE.
+	 */
+	;
+	(function () {
+
+	    /**
+	     * Class for dimension change detection.
+	     *
+	     * @param {Element|Element[]|Elements|jQuery} element
+	     * @param {Function} callback
+	     *
+	     * @constructor
+	     */
+	    var ResizeSensor = function ResizeSensor(element, callback) {
+	        /**
+	         *
+	         * @constructor
+	         */
+	        function EventQueue() {
+	            this.q = [];
+	            this.add = function (ev) {
+	                this.q.push(ev);
+	            };
+
+	            var i, j;
+	            this.call = function () {
+	                for (i = 0, j = this.q.length; i < j; i++) {
+	                    this.q[i].call();
+	                }
+	            };
+	        }
+
+	        /**
+	         * @param {HTMLElement} element
+	         * @param {String}      prop
+	         * @returns {String|Number}
+	         */
+	        function getComputedStyle(element, prop) {
+	            if (element.currentStyle) {
+	                return element.currentStyle[prop];
+	            } else if (window.getComputedStyle) {
+	                return window.getComputedStyle(element, null).getPropertyValue(prop);
+	            } else {
+	                return element.style[prop];
+	            }
+	        }
+
+	        /**
+	         *
+	         * @param {HTMLElement} element
+	         * @param {Function}    resized
+	         */
+	        function attachResizeEvent(element, resized) {
+	            if (!element.resizedAttached) {
+	                element.resizedAttached = new EventQueue();
+	                element.resizedAttached.add(resized);
+	            } else if (element.resizedAttached) {
+	                element.resizedAttached.add(resized);
+	                return;
+	            }
+
+	            element.resizeSensor = document.createElement('div');
+	            element.resizeSensor.className = 'resize-sensor';
+	            var style = 'position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; z-index: -1; visibility: hidden;';
+	            var styleChild = 'position: absolute; left: 0; top: 0; transition: 0s;';
+
+	            element.resizeSensor.style.cssText = style;
+	            element.resizeSensor.innerHTML = '<div class="resize-sensor-expand" style="' + style + '">' + '<div style="' + styleChild + '"></div>' + '</div>' + '<div class="resize-sensor-shrink" style="' + style + '">' + '<div style="' + styleChild + ' width: 200%; height: 200%"></div>' + '</div>';
+	            element.appendChild(element.resizeSensor);
+
+	            if (!{ fixed: 1, absolute: 1 }[getComputedStyle(element, 'position')]) {
+	                element.style.position = 'relative';
+	            }
+
+	            var expand = element.resizeSensor.childNodes[0];
+	            var expandChild = expand.childNodes[0];
+	            var shrink = element.resizeSensor.childNodes[1];
+	            var shrinkChild = shrink.childNodes[0];
+
+	            var lastWidth, lastHeight;
+
+	            var reset = function reset() {
+	                expandChild.style.width = expand.offsetWidth + 10 + 'px';
+	                expandChild.style.height = expand.offsetHeight + 10 + 'px';
+	                expand.scrollLeft = expand.scrollWidth;
+	                expand.scrollTop = expand.scrollHeight;
+	                shrink.scrollLeft = shrink.scrollWidth;
+	                shrink.scrollTop = shrink.scrollHeight;
+	                lastWidth = element.offsetWidth;
+	                lastHeight = element.offsetHeight;
+	            };
+
+	            reset();
+
+	            var changed = function changed() {
+	                if (element.resizedAttached) {
+	                    element.resizedAttached.call();
+	                }
+	            };
+
+	            var addEvent = function addEvent(el, name, cb) {
+	                if (el.attachEvent) {
+	                    el.attachEvent('on' + name, cb);
+	                } else {
+	                    el.addEventListener(name, cb);
+	                }
+	            };
+
+	            var onScroll = function onScroll() {
+	                if (element.offsetWidth != lastWidth || element.offsetHeight != lastHeight) {
+	                    changed();
+	                }
+	                reset();
+	            };
+
+	            addEvent(expand, 'scroll', onScroll);
+	            addEvent(shrink, 'scroll', onScroll);
+	        }
+
+	        var elementType = Object.prototype.toString.call(element);
+	        var isCollectionTyped = '[object Array]' === elementType || '[object NodeList]' === elementType || '[object HTMLCollection]' === elementType || 'undefined' !== typeof jQuery && element instanceof jQuery //jquery
+	        || 'undefined' !== typeof Elements && element instanceof Elements //mootools
+	        ;
+
+	        if (isCollectionTyped) {
+	            var i = 0,
+	                j = element.length;
+	            for (; i < j; i++) {
+	                attachResizeEvent(element[i], callback);
+	            }
+	        } else {
+	            attachResizeEvent(element, callback);
+	        }
+
+	        this.detach = function () {
+	            if (isCollectionTyped) {
+	                var i = 0,
+	                    j = element.length;
+	                for (; i < j; i++) {
+	                    ResizeSensor.detach(element[i]);
+	                }
+	            } else {
+	                ResizeSensor.detach(element);
+	            }
+	        };
+	    };
+
+	    ResizeSensor.detach = function (element) {
+	        if (element.resizeSensor) {
+	            element.removeChild(element.resizeSensor);
+	            delete element.resizeSensor;
+	            delete element.resizedAttached;
+	        }
+	    };
+
+	    // make available to common module loader
+	    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+	        module.exports = ResizeSensor;
+	    } else {
+	        window.ResizeSensor = ResizeSensor;
+	    }
+	})();
+	}.call(window));
 
 /***/ }
 /******/ ]);

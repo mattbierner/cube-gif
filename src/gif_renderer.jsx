@@ -9,9 +9,10 @@ import CubeGifRenderer from './3d_renderer';
 export default class GifRenderer extends React.Component {
     componentDidMount() {
         const element = ReactDOM.findDOMNode(this);
-        this._3dCanvas = element.getElementsByClassName('3d-canvas')[0];
-        this._renderer = new CubeGifRenderer(this._3dCanvas, this.onSampleDidChange.bind(this));
-        
+        const container = element.getElementsByClassName('three-container')[0];
+        this._3dCanvas = element.getElementsByClassName('three-canvas')[0];
+        this._renderer = new CubeGifRenderer(this._3dCanvas, container, this.onSampleDidChange.bind(this));
+
         if (this.props.imageData) {
             this._renderer.setGif(this.props.imageData, this.props);
         }
@@ -21,7 +22,7 @@ export default class GifRenderer extends React.Component {
 
         this._renderer.render();
 
-        this._2dCanvas = element.getElementsByClassName('2d-canvas')[0];
+        this._2dCanvas = element.getElementsByClassName('slice-canvas')[0];
         this._ctx = this._2dCanvas.getContext('2d');
     }
 
@@ -31,20 +32,24 @@ export default class GifRenderer extends React.Component {
         }
     }
 
+    /**
+     * Update 2d canvas when image changes.
+     */
     onSampleDidChange(imageData) {
-       // this.props.imageData
-       this._2dCanvas.width = imageData.width;
-
-       this._2dCanvas.height = imageData.height
-       this._ctx.putImageData(imageData, 0, 0);
+        this._2dCanvas.width = imageData.width;
+        this._2dCanvas.height = imageData.height;
+        this._ctx.putImageData(imageData, 0, 0);
     }
-    
 
     render() {
         return (
-            <div>
-                <canvas className="3d-canvas" />
-                <canvas className="2d-canvas" width="200" height="200" />
+            <div className="gif-renderer">
+                <div className="three-container">
+                    <canvas className="three-canvas" />
+                </div>
+                <div className="slice-container">
+                    <canvas className="slice-canvas" width="200" height="200" />
+                </div>
             </div>
         );
     }

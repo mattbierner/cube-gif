@@ -57,9 +57,7 @@ export default class Viewer extends React.Component {
     render() {
         return (
             <div className="gif-viewer" id="viewer">
-                <div className="player-wrapper">
-                     <GifRenderer imageData={this.state.imageData} />
-                </div>
+                <GifRenderer imageData={this.state.imageData} />
             </div>);
     }
 }

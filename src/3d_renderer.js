@@ -2,6 +2,7 @@ import THREE from 'three';
 import OrbitControls from './OrbitControls';
 import TransformControls from './TransformControls';
 import throttle from 'lodash.throttle';
+const ResizeSensor = require('imports?this=>window!css-element-queries/src/ResizeSensor');
 
 import gen_array from './gen_array';
 import createImageData from './create_image_data';
@@ -10,6 +11,7 @@ import cubeShader from './cube_shader';
 
 const cubeMaterial = new THREE.ShaderMaterial(cubeShader);
 
+const cameraBase = 3;
 
 /**
  * Create a plane from 4 points.
@@ -49,18 +51,20 @@ const createPlane = (name, a, b, c, d, mat) => {
  * 
  */
 export default class CubeRenderer {
-    constructor(canvas, delegate) {
+    constructor(canvas, container, delegate) {
         this._frames = [];
         this._options = {};
         this._delegate = delegate;
+        this._container = container;
 
         this._scene = new THREE.Scene();
         this._uiScene = new THREE.Scene();
 
         this.initRenderer(canvas);
-        this.initCamera(3, 3);
+        this.initCamera(cameraBase, cameraBase);
         this.initControls(canvas);
-        this.resize(500, 500);
+        new ResizeSensor(this._container, this.onResize.bind(this));
+        this.onResize();
 
         this.initGeometry();
 
@@ -79,7 +83,7 @@ export default class CubeRenderer {
     }
 
     initCamera(width, height) {
-        this._camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, -10, 10 );
+        this._camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, -10, 10);
         this._camera.position.z = 1;
         this._camera.position.x = 1;
         this._camera.position.y = 1;
@@ -91,8 +95,8 @@ export default class CubeRenderer {
         this._controls.enableDamping = true;
         this._controls.dampingFactor = 0.25;
         this._controls.enableZoom = true;
-         this._controls.minZoom = 0.01;
-         this._controls.maxZoom = 20;
+        this._controls.minZoom = 0.01;
+        this._controls.maxZoom = 20;
 
         // Create transform controls
         this._transformControls = new TransformControls(this._camera, container);
@@ -121,11 +125,20 @@ export default class CubeRenderer {
         });
     }
 
-    resize(width, height) {
+    onResize() {
+        const {width, height} = this._container.getBoundingClientRect();
+
         this._width = width;
         this._height = height;
 
         this._renderer.setSize(width, height);
+
+        const aspect = width / height;
+        this._camera.left = -cameraBase * aspect;
+        this._camera.right = cameraBase * aspect;
+        this._camera.top = cameraBase;
+        this._camera.bottom = -cameraBase;
+        this._camera.updateProjectionMatrix();
     }
 
     initGeometry() {
@@ -422,9 +435,9 @@ export default class CubeRenderer {
         this.update()
         this.render();
 
-       //  this._plane.rotateZ(0.002);
-         //this._plane.rotateY(0.002);
-         //this._needsSlice = true;
+        //  this._plane.rotateZ(0.002);
+        //this._plane.rotateY(0.002);
+        //this._needsSlice = true;
         this._slicer = this._slicer || throttle(() => this.slice(this._data), 50);
 
         if (this._needsSlice) {
