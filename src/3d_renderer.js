@@ -85,10 +85,7 @@ export default class CubeRenderer {
 
     initCamera(width, height) {
         this._camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, -10, 10);
-        this._camera.position.z = 1;
-        this._camera.position.x = 1;
-        this._camera.position.y = 1;
-
+        this.resetCamera();
     }
 
     initControls(container) {
@@ -143,6 +140,11 @@ export default class CubeRenderer {
     }
 
     initGeometry() {
+        this.initPlane();
+        this.initAxis();
+    }
+
+    initPlane() {
         const material = new THREE.MeshBasicMaterial({
             side: THREE.DoubleSide,
             map: new THREE.Texture(),
@@ -150,7 +152,7 @@ export default class CubeRenderer {
             alphaTest: 0.5,
         });
 
-        const size = 1;
+        const size = 0.80;
         this._plane = createPlane('plane',
             new THREE.Vector3(-size, size, 0), new THREE.Vector3(size, size, 0),
             new THREE.Vector3(size, -size, 0), new THREE.Vector3(-size, -size, 0),
@@ -166,11 +168,54 @@ export default class CubeRenderer {
 
         const edges = new THREE.EdgesHelper(this._plane, '#333333');
         this._scene.add(edges);
-
-        this._plane.rotateOnAxis(new THREE.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
         this._scene.add(this._plane);
+        this.resetPlane();
 
         this._transformControls.attach(this._plane);
+
+        const topLeftMarkerGeometry = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+        const topLeftMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
+        const topLeftMarker = new THREE.Mesh(topLeftMarkerGeometry, topLeftMarkerMaterial);
+
+        this._plane.add(topLeftMarker);
+        topLeftMarker.translateX(-size);
+        topLeftMarker.translateY(size);
+    }
+
+    initAxis() {
+        const size = 0.4;
+        const origin = new THREE.Vector3(-0.6, -0.6, 0.6);
+
+        const axis = [
+            { color: 0xff0000, vector: new THREE.Vector3(size, 0, 0) },
+            { color: 0x00ff00, vector: new THREE.Vector3(0, size, 0) },
+            { color: 0x0000ff, vector: new THREE.Vector3(0, 0, -size) }];
+
+        for (const a of axis) {
+            const material = new THREE.LineBasicMaterial({ color: a.color });
+            const geometry = new THREE.Geometry();
+            geometry.vertices.push(origin, new THREE.Vector3().addVectors(origin, a.vector));
+
+            this._scene.add(new THREE.Line(geometry, material));
+        }
+    }
+
+    /**
+     * Set the camera to its original position
+     */
+    resetCamera() {
+        this._camera.position.z = 1;
+        this._camera.position.x = 1;
+        this._camera.position.y = 1;
+    }
+
+    resetPlane() {
+        this._plane.scale.set(1, 1, 1);
+        this._plane.position.set(0, 0, 0);
+        this._plane.rotation.set(0, 0, 0, 0);
+        this._plane.updateMatrix();
+        this._plane.rotateOnAxis(new THREE.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
+        this._needsSlice = true;
     }
 
     /**
@@ -260,9 +305,9 @@ export default class CubeRenderer {
     }
 
     /**
-     * 
+     * Set the currently rendered image.
      */
-    setGif(imageData, options) {
+    setGif(imageData) {
         this.clear();
         this._data = imageData;
 
@@ -323,12 +368,12 @@ export default class CubeRenderer {
             this._cube.add(edges);
         }
 
-        const g2 = new THREE.BoxGeometry(this._imageCube.width - 0.01, this._imageCube.height- 0.01, this._imageCube.depth - 0.01);
+        const g2 = new THREE.BoxGeometry(this._imageCube.width - 0.01, this._imageCube.height - 0.01, this._imageCube.depth - 0.01);
         const mat = new THREE.ShaderMaterial(cubeVolumeShader);
         mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
 
         const mesh = new THREE.Mesh(g2, mat);
-        this._scene.add(mesh);
+        this._cube.add(mesh);
 
         this._needsSlice = true;
     }

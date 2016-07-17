@@ -28474,6 +28474,10 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
+	var _labeled_slider = __webpack_require__(225);
+
+	var _labeled_slider2 = _interopRequireDefault(_labeled_slider);
+
 	var _load_gif = __webpack_require__(209);
 
 	var _load_gif2 = _interopRequireDefault(_load_gif);
@@ -28508,6 +28512,7 @@
 	            exporting: false,
 
 	            // sampling
+	            maxSampleSize: 1,
 	            sampleWidth: 1,
 	            sampleHeight: 1
 	        };
@@ -28542,8 +28547,9 @@
 	                    error: null,
 
 	                    // sampling
-	                    sampleWidth: sampleSize,
-	                    sampleHeight: sampleSize
+	                    maxSampleSize: sampleSize,
+	                    sampleWidth: sampleSize / 2,
+	                    sampleHeight: sampleSize / 2
 	                });
 	            }).catch(function (e) {
 	                if (file !== _this2.props.file) return;
@@ -28557,12 +28563,46 @@
 	            });
 	        }
 	    }, {
+	        key: 'onSampleWidthChange',
+	        value: function onSampleWidthChange(value) {
+	            this.setState({ sampleWidth: value });
+	        }
+	    }, {
+	        key: 'onSampleHeight',
+	        value: function onSampleHeight(value) {
+	            this.setState({ sampleHeight: value });
+	        }
+	    }, {
 	        key: 'render',
 	        value: function render() {
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'gif-viewer', id: 'viewer' },
-	                _react2.default.createElement(_gif_renderer2.default, this.state)
+	                _react2.default.createElement(_gif_renderer2.default, this.state),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'controls', id: 'controls' },
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'full-width' },
+	                        _react2.default.createElement(_labeled_slider2.default, { title: 'Sample Width',
+	                            min: '1',
+	                            unit: 'px',
+	                            max: this.state.maxSampleSize,
+	                            value: this.state.sampleWidth,
+	                            onChange: this.onSampleWidthChange.bind(this) })
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'full-width' },
+	                        _react2.default.createElement(_labeled_slider2.default, { title: 'Sample Height',
+	                            min: '0',
+	                            unit: 'px',
+	                            max: this.state.maxSampleSize,
+	                            value: this.state.sampleHeight,
+	                            onChange: this.onSampleHeight.bind(this) })
+	                    )
+	                )
 	            );
 	        }
 	    }]);
@@ -29523,7 +29563,6 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	/**
-	 * Renders a median blended gif.
 	 */
 
 	var GifRenderer = function (_React$Component) {
@@ -29575,6 +29614,16 @@
 	            this._ctx.putImageData(imageData, 0, 0);
 	        }
 	    }, {
+	        key: 'resetCamera',
+	        value: function resetCamera() {
+	            this._renderer.resetCamera();
+	        }
+	    }, {
+	        key: 'resetPlane',
+	        value: function resetPlane() {
+	            this._renderer.resetPlane();
+	        }
+	    }, {
 	        key: 'render',
 	        value: function render() {
 	            return _react2.default.createElement(
@@ -29583,11 +29632,30 @@
 	                _react2.default.createElement(
 	                    'div',
 	                    { className: 'three-container' },
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'three-view-controls' },
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: this.resetCamera.bind(this) },
+	                            'Reset Camera'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: this.resetPlane.bind(this) },
+	                            'Reset Plane'
+	                        )
+	                    ),
 	                    _react2.default.createElement('canvas', { className: 'three-canvas' })
 	                ),
 	                _react2.default.createElement(
 	                    'div',
 	                    { className: 'slice-container' },
+	                    _react2.default.createElement(
+	                        'h2',
+	                        null,
+	                        'Slice'
+	                    ),
 	                    _react2.default.createElement('canvas', { className: 'slice-canvas', width: '200', height: '200' })
 	                )
 	            );
@@ -29724,9 +29792,7 @@
 	        key: 'initCamera',
 	        value: function initCamera(width, height) {
 	            this._camera = new _three2.default.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -10, 10);
-	            this._camera.position.z = 1;
-	            this._camera.position.x = 1;
-	            this._camera.position.y = 1;
+	            this.resetCamera();
 	        }
 	    }, {
 	        key: 'initControls',
@@ -29793,6 +29859,12 @@
 	    }, {
 	        key: 'initGeometry',
 	        value: function initGeometry() {
+	            this.initPlane();
+	            this.initAxis();
+	        }
+	    }, {
+	        key: 'initPlane',
+	        value: function initPlane() {
 	            var material = new _three2.default.MeshBasicMaterial({
 	                side: _three2.default.DoubleSide,
 	                map: new _three2.default.Texture(),
@@ -29800,7 +29872,7 @@
 	                alphaTest: 0.5
 	            });
 
-	            var size = 1;
+	            var size = 0.80;
 	            this._plane = createPlane('plane', new _three2.default.Vector3(-size, size, 0), new _three2.default.Vector3(size, size, 0), new _three2.default.Vector3(size, -size, 0), new _three2.default.Vector3(-size, -size, 0), material);
 
 	            this._plane.geometry.attributes.uv.array = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
@@ -29808,11 +29880,77 @@
 
 	            var edges = new _three2.default.EdgesHelper(this._plane, '#333333');
 	            this._scene.add(edges);
-
-	            this._plane.rotateOnAxis(new _three2.default.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
 	            this._scene.add(this._plane);
+	            this.resetPlane();
 
 	            this._transformControls.attach(this._plane);
+
+	            var topLeftMarkerGeometry = new _three2.default.BoxGeometry(0.05, 0.05, 0.05);
+	            var topLeftMarkerMaterial = new _three2.default.MeshBasicMaterial({ color: 0xcccccc });
+	            var topLeftMarker = new _three2.default.Mesh(topLeftMarkerGeometry, topLeftMarkerMaterial);
+
+	            this._plane.add(topLeftMarker);
+	            topLeftMarker.translateX(-size);
+	            topLeftMarker.translateY(size);
+	        }
+	    }, {
+	        key: 'initAxis',
+	        value: function initAxis() {
+	            var size = 0.4;
+	            var origin = new _three2.default.Vector3(-0.6, -0.6, 0.6);
+
+	            var axis = [{ color: 0xff0000, vector: new _three2.default.Vector3(size, 0, 0) }, { color: 0x00ff00, vector: new _three2.default.Vector3(0, size, 0) }, { color: 0x0000ff, vector: new _three2.default.Vector3(0, 0, -size) }];
+
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = axis[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var a = _step.value;
+
+	                    var material = new _three2.default.LineBasicMaterial({ color: a.color });
+	                    var geometry = new _three2.default.Geometry();
+	                    geometry.vertices.push(origin, new _three2.default.Vector3().addVectors(origin, a.vector));
+
+	                    this._scene.add(new _three2.default.Line(geometry, material));
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
+	            }
+	        }
+
+	        /**
+	         * Set the camera to its original position
+	         */
+
+	    }, {
+	        key: 'resetCamera',
+	        value: function resetCamera() {
+	            this._camera.position.z = 1;
+	            this._camera.position.x = 1;
+	            this._camera.position.y = 1;
+	        }
+	    }, {
+	        key: 'resetPlane',
+	        value: function resetPlane() {
+	            this._plane.scale.set(1, 1, 1);
+	            this._plane.position.set(0, 0, 0);
+	            this._plane.rotation.set(0, 0, 0, 0);
+	            this._plane.updateMatrix();
+	            this._plane.rotateOnAxis(new _three2.default.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
+	            this._needsSlice = true;
 	        }
 
 	        /**
@@ -29914,12 +30052,12 @@
 	        }
 
 	        /**
-	         * 
+	         * Set the currently rendered image.
 	         */
 
 	    }, {
 	        key: 'setGif',
-	        value: function setGif(imageData, options) {
+	        value: function setGif(imageData) {
 	            this.clear();
 	            this._data = imageData;
 
@@ -29957,28 +30095,28 @@
 	            this._scene.add(this._cube);
 
 	            // Create outlines
-	            var _iteratorNormalCompletion = true;
-	            var _didIteratorError = false;
-	            var _iteratorError = undefined;
+	            var _iteratorNormalCompletion2 = true;
+	            var _didIteratorError2 = false;
+	            var _iteratorError2 = undefined;
 
 	            try {
-	                for (var _iterator = this._cube.children.slice()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	                    var child = _step.value;
+	                for (var _iterator2 = this._cube.children.slice()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	                    var child = _step2.value;
 
 	                    var edges = new _three2.default.EdgesHelper(child, '#cccccc');
 	                    this._cube.add(edges);
 	                }
 	            } catch (err) {
-	                _didIteratorError = true;
-	                _iteratorError = err;
+	                _didIteratorError2 = true;
+	                _iteratorError2 = err;
 	            } finally {
 	                try {
-	                    if (!_iteratorNormalCompletion && _iterator.return) {
-	                        _iterator.return();
+	                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	                        _iterator2.return();
 	                    }
 	                } finally {
-	                    if (_didIteratorError) {
-	                        throw _iteratorError;
+	                    if (_didIteratorError2) {
+	                        throw _iteratorError2;
 	                    }
 	                }
 	            }
@@ -29988,7 +30126,7 @@
 	            mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
 
 	            var mesh = new _three2.default.Mesh(g2, mat);
-	            this._scene.add(mesh);
+	            this._cube.add(mesh);
 
 	            this._needsSlice = true;
 	        }
@@ -36203,6 +36341,94 @@
 	    side: _three2.default.DoubleSide,
 	    transparent: true
 	};
+
+/***/ },
+/* 225 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactDom = __webpack_require__(33);
+
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * Number slider with a title and description of values.
+	 */
+
+	var LabeledRange = function (_React$Component) {
+	    _inherits(LabeledRange, _React$Component);
+
+	    function LabeledRange() {
+	        _classCallCheck(this, LabeledRange);
+
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(LabeledRange).apply(this, arguments));
+	    }
+
+	    _createClass(LabeledRange, [{
+	        key: 'onChange',
+	        value: function onChange(e) {
+	            this.props.onChange(e.target.value);
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var title = this.props.title ? _react2.default.createElement(
+	                'div',
+	                { className: 'control-title' },
+	                this.props.title
+	            ) : '';
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'control-group labeled-slider ' + (this.props.className || '') },
+	                title,
+	                _react2.default.createElement('input', { className: 'slider',
+	                    type: 'range',
+	                    min: this.props.min,
+	                    max: this.props.max,
+	                    value: this.props.value,
+	                    onChange: this.onChange.bind(this) }),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'min label' },
+	                    this.props.min
+	                ),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'max label' },
+	                    this.props.max
+	                ),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'value label' },
+	                    this.props.value + (this.props.units || '')
+	                )
+	            );
+	        }
+	    }]);
+
+	    return LabeledRange;
+	}(_react2.default.Component);
+
+	exports.default = LabeledRange;
 
 /***/ }
 /******/ ]);

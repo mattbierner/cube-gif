@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import LabeledSlider from './components/labeled_slider';
+
 import loadGif from './load_gif';
 import GifRenderer from './gif_renderer';
 
@@ -17,6 +19,7 @@ export default class Viewer extends React.Component {
             exporting: false,
 
             // sampling
+            maxSampleSize: 1,
             sampleWidth: 1,
             sampleHeight: 1
         };
@@ -46,8 +49,9 @@ export default class Viewer extends React.Component {
                     error: null,
 
                     // sampling
-                    sampleWidth: sampleSize,
-                    sampleHeight: sampleSize
+                    maxSampleSize: sampleSize,
+                    sampleWidth: sampleSize / 2,
+                    sampleHeight: sampleSize / 2
                 });
             })
             .catch(e => {
@@ -63,12 +67,37 @@ export default class Viewer extends React.Component {
             });
     }
 
+    onSampleWidthChange(value) {
+        this.setState({ sampleWidth: value });
+    }
+
+    onSampleHeight(value) {
+        this.setState({ sampleHeight: value });
+    }
+
     render() {
         return (
             <div className="gif-viewer" id="viewer">
                 <GifRenderer {...this.state} />
+                <div className="controls" id="controls">
+                    <div className="full-width">
+                        <LabeledSlider title='Sample Width'
+                            min="1"
+                            unit="px"
+                            max={this.state.maxSampleSize}
+                            value={this.state.sampleWidth}
+                            onChange={this.onSampleWidthChange.bind(this) }/>
+                    </div>
+                    <div className="full-width">
+                        <LabeledSlider title='Sample Height'
+                            min="0"
+                            unit="px"
+                            max={this.state.maxSampleSize}
+                            value={this.state.sampleHeight}
+                            onChange={this.onSampleHeight.bind(this) }/>
+                    </div>
+                </div>
             </div>
-            
         );
     }
 }
