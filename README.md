@@ -3,17 +3,17 @@
 <div align="center">
     <div><img src="https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/cube.gif" /></div>
     <h2 align="center">cube.gif</h2>
-    <p><i align="center">cube gifs</i></p>
+    <p><i align="center">Volume Rendering and Slicing Gifs</i></p>
 </div>
 
 * [Site][site]
 * [Documentation][documentation]
 
-*[cube.gif](site)* is an experiment visulizing gifs as 3D volumes and taking 2D slices of this volume. This encodes the time aspect of the animation as another spartial dimension that is then projected back to create a two dimensional image.
+*[cube.gif](site)* is an experiment visualizing gifs as 3D volumes and taking 2D slices of this volume. This encodes animation time as another spatial dimension, that we can then project back into two dimensions to create images that capture multiple frames of the original animation.
 
 The above image shows one of these image cubes. The front left face is the first frame of the gif. The axis going backwards from the front face is time. Therefore, left face capture the right most pixels of the gif over time. 
 
-We can slice through the cube at angle angle to create a new 2d image. Here's the slice of the above animation.
+We can slice through the cube at angle angle to create a new 2d image. The slice plane here is the plane moving towards and away from the camera. Here's the slice of the above animation.
 
 <div align="center"><img src="https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/slice.gif" /></div>
 

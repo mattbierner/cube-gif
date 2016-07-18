@@ -13,7 +13,7 @@ import cubeVolumeShader from './shaders/cube_volume_shader';
 const cubeMaterial = new THREE.ShaderMaterial(cubeShader);
 
 const CAMERA_BASE = 1;
-const INITIAL_PLANE_SIZE = 0.8; 
+const INITIAL_PLANE_SIZE = 0.8;
 
 /**
  * Create a plane from 4 points.
@@ -225,28 +225,34 @@ export default class CubeRenderer {
      * Set the camera to its original position
      */
     resetCamera() {
-        this._camera.position.set(1, 1, 1);
+        this._setCameraPosition(1, 1, 1);
     }
 
     /**
      * Switch to default front view.
      */
     goToFrontView() {
-        this._camera.position.set(0, 0, 1.5);
+        this._setCameraPosition(0, 0, 1.5);
     }
 
     /**
      * Switch to default side view.
      */
     goToSideView() {
-        this._camera.position.set(1.5, 0, 0);
+        this._setCameraPosition(1.5, 0, 0);
     }
 
     /**
      * Siwtch to default top view.
      */
     goToTopView() {
+        this._setCameraPosition(0, 1.5, 0);
+    }
+
+    _setCameraPosition(x, y, z) {
         this._camera.position.set(0, 1.5, 0);
+        this._camera.rotation.set(0, 0, 0, 0);
+        this._camera.lookAt(new THREE.Vector3());
     }
 
     /**
@@ -570,10 +576,10 @@ export default class CubeRenderer {
 
         if (false) { // sample auto move for demo
             this._delta = this._delta == undefined ? 0.0001 : this._delta;
-            this._momentum = this._momentum == undefined ?  0.014 : this._momentum;
+            this._momentum = this._momentum == undefined ? 0.014 : this._momentum;
 
             const oldMomentum = this._momentum
-            this._momentum += (this._plane.position.z  > 0 ? -1 : 1) * this._delta;
+            this._momentum += (this._plane.position.z > 0 ? -1 : 1) * this._delta;
             console.log(this._momentum, this._delta);
 
             this._plane.translateZ(this._momentum);

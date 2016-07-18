@@ -85,7 +85,7 @@
 	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Main).call(this, props));
 
 	        _this.state = {
-	            selectedGif: "./images/initial.gif"
+	            selectedGif: "./images/example-start.gif"
 	        };
 	        return _this;
 	    }
@@ -30218,7 +30218,7 @@
 	    }, {
 	        key: 'resetCamera',
 	        value: function resetCamera() {
-	            this._camera.position.set(1, 1, 1);
+	            this._setCameraPosition(1, 1, 1);
 	        }
 
 	        /**
@@ -30228,7 +30228,7 @@
 	    }, {
 	        key: 'goToFrontView',
 	        value: function goToFrontView() {
-	            this._camera.position.set(0, 0, 1.5);
+	            this._setCameraPosition(0, 0, 1.5);
 	        }
 
 	        /**
@@ -30238,7 +30238,7 @@
 	    }, {
 	        key: 'goToSideView',
 	        value: function goToSideView() {
-	            this._camera.position.set(1.5, 0, 0);
+	            this._setCameraPosition(1.5, 0, 0);
 	        }
 
 	        /**
@@ -30248,7 +30248,14 @@
 	    }, {
 	        key: 'goToTopView',
 	        value: function goToTopView() {
+	            this._setCameraPosition(0, 1.5, 0);
+	        }
+	    }, {
+	        key: '_setCameraPosition',
+	        value: function _setCameraPosition(x, y, z) {
 	            this._camera.position.set(0, 1.5, 0);
+	            this._camera.rotation.set(0, 0, 0, 0);
+	            this._camera.lookAt(new _three2.default.Vector3());
 	        }
 
 	        /**
