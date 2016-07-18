@@ -10,6 +10,7 @@
 
     #site-title {
         display: block;
+        margin: 0 auto;
         padding: 0 1rem;
         margin-top: 2rem;
         height: auto;
@@ -22,9 +23,13 @@
     }
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 1000px) {
     #site-header {
         padding-bottom: 2em;
+     
+        #site-title {
+            max-width: 400px;
+        }
     }
 }
 
@@ -34,6 +39,7 @@
 
         #site-title {
             margin-top: 1rem;
+            max-width: 300px;
         }
     }
 }

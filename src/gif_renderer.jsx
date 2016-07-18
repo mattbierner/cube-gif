@@ -79,6 +79,17 @@ export default class GifRenderer extends React.Component {
         this._renderer.showGuides(shouldShow);
     }
 
+    /**
+     * Export the current slice as a png
+     */
+    exportSlice() {
+        if (!this._2dCanvas)
+            return;
+        
+        const url = this._2dCanvas.toDataURL("image/png");
+        window.open(url);
+    }
+
     render() {
         return (
             <div className="gif-renderer">
@@ -113,6 +124,10 @@ export default class GifRenderer extends React.Component {
                         <span className="property">Sample Height: <span className="value">{this.props.sampleHeight}px</span></span>
                         <br />
                         <span className="property">Plane Size: <span className="value">{this.state.planeWidth.toFixed(2)} x {this.state.planeHeight.toFixed(2)}</span></span>
+                    </div>
+
+                    <div className="export-controls">
+                        <button onClick={this.exportSlice.bind(this)}>Export Image</button>
                     </div>
                 </div>
             </div>

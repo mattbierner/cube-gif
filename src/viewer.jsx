@@ -79,7 +79,7 @@ export default class Viewer extends React.Component {
         return (
             <div className="gif-viewer" id="viewer">
                 <GifRenderer {...this.state} />
-                <div className="controls" id="controls">
+                <div className="content-wrapper" id="controls">
                     <div className="full-width">
                         <LabeledSlider title='Sample Width'
                             min="1"
@@ -90,7 +90,7 @@ export default class Viewer extends React.Component {
                     </div>
                     <div className="full-width">
                         <LabeledSlider title='Sample Height'
-                            min="0"
+                            min="1"
                             unit="px"
                             max={this.state.maxSampleSize}
                             value={this.state.sampleHeight}

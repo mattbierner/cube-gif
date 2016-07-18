@@ -28581,7 +28581,7 @@
 	                _react2.default.createElement(_gif_renderer2.default, this.state),
 	                _react2.default.createElement(
 	                    'div',
-	                    { className: 'controls', id: 'controls' },
+	                    { className: 'content-wrapper', id: 'controls' },
 	                    _react2.default.createElement(
 	                        'div',
 	                        { className: 'full-width' },
@@ -28596,7 +28596,7 @@
 	                        'div',
 	                        { className: 'full-width' },
 	                        _react2.default.createElement(_labeled_slider2.default, { title: 'Sample Height',
-	                            min: '0',
+	                            min: '1',
 	                            unit: 'px',
 	                            max: this.state.maxSampleSize,
 	                            value: this.state.sampleHeight,
@@ -29747,6 +29747,19 @@
 	            this.setState({ showingGuides: shouldShow });
 	            this._renderer.showGuides(shouldShow);
 	        }
+
+	        /**
+	         * Export the current slice as a png
+	         */
+
+	    }, {
+	        key: 'exportSlice',
+	        value: function exportSlice() {
+	            if (!this._2dCanvas) return;
+
+	            var url = this._2dCanvas.toDataURL("image/png");
+	            window.open(url);
+	        }
 	    }, {
 	        key: 'render',
 	        value: function render() {
@@ -29888,6 +29901,15 @@
 	                                ' x ',
 	                                this.state.planeHeight.toFixed(2)
 	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'export-controls' },
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: this.exportSlice.bind(this) },
+	                            'Export Image'
 	                        )
 	                    )
 	                )
