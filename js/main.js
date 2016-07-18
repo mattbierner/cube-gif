@@ -85,7 +85,7 @@
 	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Main).call(this, props));
 
 	        _this.state = {
-	            selectedGif: "https://media.giphy.com/media/xThuWcaa4U4XZQDgvm/giphy-tumblr.gif"
+	            selectedGif: "./images/initial.gif"
 	        };
 	        return _this;
 	    }
@@ -30614,9 +30614,19 @@
 	            this.update();
 	            this.render();
 
-	            //  this._plane.rotateZ(0.002);
-	            //this._plane.rotateY(0.002);
-	            //this._needsSlice = true;
+	            if (false) {
+	                // sample auto move for demo
+	                this._delta = this._delta == undefined ? 0.0001 : this._delta;
+	                this._momentum = this._momentum == undefined ? 0.014 : this._momentum;
+
+	                var oldMomentum = this._momentum;
+	                this._momentum += (this._plane.position.z > 0 ? -1 : 1) * this._delta;
+	                console.log(this._momentum, this._delta);
+
+	                this._plane.translateZ(this._momentum);
+	                this._needsSlice = true;
+	            }
+
 	            this._slicer = this._slicer || (0, _lodash2.default)(function () {
 	                return _this7.slice(_this7._data);
 	            }, 50);

@@ -568,9 +568,18 @@ export default class CubeRenderer {
         this.update()
         this.render();
 
-        //  this._plane.rotateZ(0.002);
-        //this._plane.rotateY(0.002);
-        //this._needsSlice = true;
+        if (false) { // sample auto move for demo
+            this._delta = this._delta == undefined ? 0.0001 : this._delta;
+            this._momentum = this._momentum == undefined ?  0.014 : this._momentum;
+
+            const oldMomentum = this._momentum
+            this._momentum += (this._plane.position.z  > 0 ? -1 : 1) * this._delta;
+            console.log(this._momentum, this._delta);
+
+            this._plane.translateZ(this._momentum);
+            this._needsSlice = true;
+        }
+
         this._slicer = this._slicer || throttle(() => this.slice(this._data), 50);
 
         if (this._needsSlice) {
