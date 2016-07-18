@@ -9,7 +9,8 @@
 * [Site][site]
 * [Documentation][documentation]
 
-*[cube.gif](site)* 
+*[cube.gif](site)* is an experiment visulizing gifs as 3D volumes and taking 2D slices of this volume. This encodes the time aspect of the animation as another spartial dimension that is then projected back to create a two dimensional image.
+
 
 ## Building and Running
 The website uses [Jekyll](http://jekyllrb.com/) and [Webpack](http://webpack.github.io/) for building:

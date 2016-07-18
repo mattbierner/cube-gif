@@ -12,7 +12,7 @@ export default class GifRenderer extends React.Component {
             showingControls: true,
             showingGuides: true
         };
-    } 
+    }
 
     componentDidMount() {
         const element = ReactDOM.findDOMNode(this);
@@ -71,22 +71,25 @@ export default class GifRenderer extends React.Component {
             <div className="gif-renderer">
                 <div className="three-container">
                     <div className="three-controls three-view-controls">
-                        <button onClick={() => this._renderer.goToFrontView()}>Front</button>
-                        <button onClick={() => this._renderer.goToSideView()}>Side</button>
-                        <button onClick={() => this._renderer.goToTopView()}>Top</button>
+                        <button onClick={() => this._renderer.goToFrontView() }>Front</button>
+                        <button onClick={() => this._renderer.goToSideView() }>Side</button>
+                        <button onClick={() => this._renderer.goToTopView() }>Top</button>
 
-                        <button onClick={() => this._renderer.resetCamera()}>Reset Camera</button>
+                        <button onClick={() => this._renderer.resetCamera() }>Reset Camera</button>
                     </div>
-                    <div className="three-controls three-obj-controls">
-                        <button onClick={() => this._renderer.setTransformMode('translate')}>Translate (w)</button>
-                        <button onClick={() => this._renderer.setTransformMode('rotate')}>Rotate (e)</button>
-                        <button onClick={() => this._renderer.setTransformMode('scale')}>Scale (r)</button>
+                    <div className="three-controls three-ui-controls">
+                        <button onClick={this.toggleControls.bind(this) }>{this.state.showingControls ? 'Hide Controls' : 'Show Controls'}</button>
+                        <button onClick={this.toggleGuides.bind(this) }>{this.state.showingGuides ? 'Hide Guides' : 'Show Guides'}</button>
+                    </div>
+                    <div className="three-obj-control-wrapper">
+                        <div className="three-controls three-obj-controls">
+                            <button onClick={() => this._renderer.setTransformMode('translate') }>Translate (w) </button>
+                            <button onClick={() => this._renderer.setTransformMode('rotate') }>Rotate (e) </button>
+                            <button onClick={() => this._renderer.setTransformMode('scale') }>Scale (r) </button>
+                            <button onClick={() => this._renderer.resetPlane() }>Reset Plane</button>
+                        </div>
+                    </div>
 
-                        <button onClick={() => this._renderer.resetPlane()}>Reset Plane</button>
-                        <button onClick={this.toggleControls.bind(this)}>{this.state.showingControls ? 'Hide Controls' : 'Show Controls'}</button>
-                        <button onClick={this.toggleGuides.bind(this)}>{this.state.showingGuides ? 'Hide Guides' : 'Show Guides'}</button>
-                    </div>
-                    
                     <canvas className="three-canvas" />
                 </div>
                 <div className="slice-container">

@@ -29776,35 +29776,7 @@
 	                    ),
 	                    _react2.default.createElement(
 	                        'div',
-	                        { className: 'three-controls three-obj-controls' },
-	                        _react2.default.createElement(
-	                            'button',
-	                            { onClick: function onClick() {
-	                                    return _this2._renderer.setTransformMode('translate');
-	                                } },
-	                            'Translate (w)'
-	                        ),
-	                        _react2.default.createElement(
-	                            'button',
-	                            { onClick: function onClick() {
-	                                    return _this2._renderer.setTransformMode('rotate');
-	                                } },
-	                            'Rotate (e)'
-	                        ),
-	                        _react2.default.createElement(
-	                            'button',
-	                            { onClick: function onClick() {
-	                                    return _this2._renderer.setTransformMode('scale');
-	                                } },
-	                            'Scale (r)'
-	                        ),
-	                        _react2.default.createElement(
-	                            'button',
-	                            { onClick: function onClick() {
-	                                    return _this2._renderer.resetPlane();
-	                                } },
-	                            'Reset Plane'
-	                        ),
+	                        { className: 'three-controls three-ui-controls' },
 	                        _react2.default.createElement(
 	                            'button',
 	                            { onClick: this.toggleControls.bind(this) },
@@ -29814,6 +29786,42 @@
 	                            'button',
 	                            { onClick: this.toggleGuides.bind(this) },
 	                            this.state.showingGuides ? 'Hide Guides' : 'Show Guides'
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'three-obj-control-wrapper' },
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'three-controls three-obj-controls' },
+	                            _react2.default.createElement(
+	                                'button',
+	                                { onClick: function onClick() {
+	                                        return _this2._renderer.setTransformMode('translate');
+	                                    } },
+	                                'Translate (w) '
+	                            ),
+	                            _react2.default.createElement(
+	                                'button',
+	                                { onClick: function onClick() {
+	                                        return _this2._renderer.setTransformMode('rotate');
+	                                    } },
+	                                'Rotate (e) '
+	                            ),
+	                            _react2.default.createElement(
+	                                'button',
+	                                { onClick: function onClick() {
+	                                        return _this2._renderer.setTransformMode('scale');
+	                                    } },
+	                                'Scale (r) '
+	                            ),
+	                            _react2.default.createElement(
+	                                'button',
+	                                { onClick: function onClick() {
+	                                        return _this2._renderer.resetPlane();
+	                                    } },
+	                                'Reset Plane'
+	                            )
 	                        )
 	                    ),
 	                    _react2.default.createElement('canvas', { className: 'three-canvas' })

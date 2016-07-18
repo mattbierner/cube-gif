@@ -19,7 +19,6 @@
     position: relative;
     -webkit-user-select: none;
     user-select: none;
-    
 
     canvas {
         width: 100% !important;
@@ -29,10 +28,9 @@
     .three-controls {
         border: 1px solid $text-color;
         background: rgba(255, 255, 255, 0.85);
+        display: flex;
         button {
             display: block;
-            
-            float: left;
             font-size: 10px;
             padding: 4px 8px;
             border: none;
@@ -50,10 +48,20 @@
         left: 10px;
     }
 
-     .three-obj-controls {
+     .three-ui-controls {
         position: absolute;
         top: 10px;
         right: 10px;
+    }
+
+    .three-obj-control-wrapper {
+        position: absolute;
+        margin: 0 auto;
+        bottom: 10px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
     }
 }
 
