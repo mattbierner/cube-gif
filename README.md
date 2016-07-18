@@ -2,7 +2,7 @@
 
 <div align="center">
     <div><img src="https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/cube.gif" /></div>
-    <h1 align="center">cube.gif</h1>
+    <h2 align="center">cube.gif</h2>
     <p><i align="center">cube gifs</i></p>
 </div>
 
@@ -17,7 +17,8 @@ We can slice through the cube at angle angle to create a new 2d image. Here's th
 
 <div align="center"><img src="https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/slice.gif" /></div>
 
-[See the documentation for more details][documentation].
+[See the documentation for more details][documentation]
+.
 
 ## Building and Running
 The website uses [Jekyll](http://jekyllrb.com/) and [Webpack](http://webpack.github.io/) for building:
