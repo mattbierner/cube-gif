@@ -65,42 +65,34 @@
     }
 }
 
-.gif-renderer .slice-canvas {
-    max-width: 100% !important;
-    height: auto !important;
-}
-
-.gif-properties {
-    font-size: 12px;
-    color: $light-gray;
-
-    .property {
-        display: inline-block;
-        padding: 0 0.6em;
+.slice-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.4em 0.2em;
+    text-align: center;
+    .slice-canvas {
+        width: 100% !important;
+        height: auto !important;
+        border: 1px solid $text-color;
     }
 
-    .value {
-        font-style: italic;
-    }
-}
+    .slice-properties {
+        font-size: 12px;
+        color: $light-gray;
 
-.playback-controls {
-    max-width: 400px;
-}
+        .property {
+            display: inline-block;
+            padding: 0 0.6em;
+        }
 
-.playback-controls {
-    padding-bottom: 1em;
-
-    .buttons {
-        display: flex;
-        justify-content: center;
+        .value {
+            font-style: italic;
+        }
     }
 
-    .buttons > * {
-        display: block;
-        padding: 0 0.4em;
-    }
 }
+
 
 @media only screen and (max-width: 800px) {
     .gif-viewer {

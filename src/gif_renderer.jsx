@@ -10,7 +10,10 @@ export default class GifRenderer extends React.Component {
         super(props);
         this.state = {
             showingControls: true,
-            showingGuides: true
+            showingGuides: true,
+
+            planeWidth: 0,
+            planeHeight: 0
         };
     }
 
@@ -18,7 +21,7 @@ export default class GifRenderer extends React.Component {
         const element = ReactDOM.findDOMNode(this);
         const container = element.getElementsByClassName('three-container')[0];
         this._3dCanvas = element.getElementsByClassName('three-canvas')[0];
-        this._renderer = new CubeGifRenderer(this._3dCanvas, container, this.onSampleDidChange.bind(this));
+        this._renderer = new CubeGifRenderer(this._3dCanvas, container, this);
 
         if (this.props.imageData) {
             this._renderer.setGif(this.props.imageData, this.props);
@@ -40,12 +43,22 @@ export default class GifRenderer extends React.Component {
     }
 
     /**
-     * Update 2d canvas when image changes.
+     * Update 2d canvas when slices changes.
      */
     onSampleDidChange(imageData) {
         this._2dCanvas.width = imageData.width;
         this._2dCanvas.height = imageData.height;
         this._ctx.putImageData(imageData, 0, 0);
+    }
+
+    /**
+     * Called when the plane changes
+     */
+    onPlaneDidChange(width, height) {
+        this.setState({
+            planeWidth: width,
+            planeHeight: height
+        })
     }
 
     /**
@@ -95,6 +108,12 @@ export default class GifRenderer extends React.Component {
                 <div className="slice-container">
                     <h2>Slice</h2>
                     <canvas className="slice-canvas" width="200" height="200" />
+                    <div className="slice-properties">
+                        <span className="property">Sample Width: <span className="value">{this.props.sampleWidth}px</span></span>
+                        <span className="property">Sample Height: <span className="value">{this.props.sampleHeight}px</span></span>
+                        <br />
+                        <span className="property">Plane Size: <span className="value">{this.state.planeWidth.toFixed(2)} x {this.state.planeHeight.toFixed(2)}</span></span>
+                    </div>
                 </div>
             </div>
         );

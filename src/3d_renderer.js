@@ -12,7 +12,8 @@ import cubeVolumeShader from './shaders/cube_volume_shader';
 
 const cubeMaterial = new THREE.ShaderMaterial(cubeShader);
 
-const cameraBase = 1;
+const CAMERA_BASE = 1;
+const INITIAL_PLANE_SIZE = 0.8; 
 
 /**
  * Create a plane from 4 points.
@@ -72,7 +73,7 @@ export default class CubeRenderer {
         this._uiScene = new THREE.Scene();
 
         this.initRenderer(canvas);
-        this.initCamera(cameraBase, cameraBase);
+        this.initCamera(CAMERA_BASE, CAMERA_BASE);
         this.initControls(canvas);
         new ResizeSensor(this._container, this.onResize.bind(this));
         this.onResize();
@@ -142,10 +143,10 @@ export default class CubeRenderer {
         this._renderer.setSize(width, height);
 
         const aspect = width / height;
-        this._camera.left = -cameraBase * aspect;
-        this._camera.right = cameraBase * aspect;
-        this._camera.top = cameraBase;
-        this._camera.bottom = -cameraBase;
+        this._camera.left = -CAMERA_BASE * aspect;
+        this._camera.right = CAMERA_BASE * aspect;
+        this._camera.top = CAMERA_BASE;
+        this._camera.bottom = -CAMERA_BASE;
         this._camera.updateProjectionMatrix();
     }
 
@@ -162,7 +163,7 @@ export default class CubeRenderer {
             alphaTest: 0.5,
         });
 
-        const size = 0.80;
+        const size = INITIAL_PLANE_SIZE;
         const p1 = new THREE.Vector3(-size, size, 0);
         const p2 = new THREE.Vector3(size, size, 0);
         const p3 = new THREE.Vector3(size, -size, 0);
@@ -319,6 +320,7 @@ export default class CubeRenderer {
         if (!plane.material.map.image || plane.material.map.image.width !== sampleWidth || plane.material.map.image.height !== sampleHeight) {
             const texture = createImageData(sampleWidth, sampleHeight);
             plane.material.map.image = texture;
+            plane.material.map.minFilter = THREE.NearestFilter;
         }
 
         const imageBuffer = plane.material.map.image.data;
@@ -334,7 +336,7 @@ export default class CubeRenderer {
 
         plane.material.map.needsUpdate = true;
 
-        this._delegate(plane.material.map.image);
+        this._delegate.onSampleDidChange(plane.material.map.image);
     }
 
     /**
@@ -583,6 +585,7 @@ export default class CubeRenderer {
     update() {
         this._controls.update();
         this._transformControls.update();
+        this._checkPlaneDidChange()
 
         if (!this._cube)
             return;
@@ -604,5 +607,23 @@ export default class CubeRenderer {
         this._renderer.render(this._scene, this._camera);
         this._renderer.clearDepth();
         this._renderer.render(this._uiScene, this._camera);
+    }
+
+    /**
+     * See if the sample plane's dimensions have changed
+     */
+    _checkPlaneDidChange() {
+        const oldPlaneWidth = this._planeWidth;
+        const oldPlaneHeight = this._planeHeight;
+
+        const width = INITIAL_PLANE_SIZE * 2 * this._plane.scale.x;
+        const height = INITIAL_PLANE_SIZE * 2 * this._plane.scale.y;
+
+        if (oldPlaneWidth !== width || oldPlaneHeight !== height) {
+            this._delegate.onPlaneDidChange(width, height);
+        }
+
+        this._planeWidth = width;
+        this._planeHeight = height;
     }
 }

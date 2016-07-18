@@ -29663,7 +29663,10 @@
 
 	        _this.state = {
 	            showingControls: true,
-	            showingGuides: true
+	            showingGuides: true,
+
+	            planeWidth: 0,
+	            planeHeight: 0
 	        };
 	        return _this;
 	    }
@@ -29674,7 +29677,7 @@
 	            var element = _reactDom2.default.findDOMNode(this);
 	            var container = element.getElementsByClassName('three-container')[0];
 	            this._3dCanvas = element.getElementsByClassName('three-canvas')[0];
-	            this._renderer = new _d_renderer2.default(this._3dCanvas, container, this.onSampleDidChange.bind(this));
+	            this._renderer = new _d_renderer2.default(this._3dCanvas, container, this);
 
 	            if (this.props.imageData) {
 	                this._renderer.setGif(this.props.imageData, this.props);
@@ -29697,7 +29700,7 @@
 	        }
 
 	        /**
-	         * Update 2d canvas when image changes.
+	         * Update 2d canvas when slices changes.
 	         */
 
 	    }, {
@@ -29706,6 +29709,19 @@
 	            this._2dCanvas.width = imageData.width;
 	            this._2dCanvas.height = imageData.height;
 	            this._ctx.putImageData(imageData, 0, 0);
+	        }
+
+	        /**
+	         * Called when the plane changes
+	         */
+
+	    }, {
+	        key: 'onPlaneDidChange',
+	        value: function onPlaneDidChange(width, height) {
+	            this.setState({
+	                planeWidth: width,
+	                planeHeight: height
+	            });
 	        }
 
 	        /**
@@ -29834,7 +29850,46 @@
 	                        null,
 	                        'Slice'
 	                    ),
-	                    _react2.default.createElement('canvas', { className: 'slice-canvas', width: '200', height: '200' })
+	                    _react2.default.createElement('canvas', { className: 'slice-canvas', width: '200', height: '200' }),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'slice-properties' },
+	                        _react2.default.createElement(
+	                            'span',
+	                            { className: 'property' },
+	                            'Sample Width: ',
+	                            _react2.default.createElement(
+	                                'span',
+	                                { className: 'value' },
+	                                this.props.sampleWidth,
+	                                'px'
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'span',
+	                            { className: 'property' },
+	                            'Sample Height: ',
+	                            _react2.default.createElement(
+	                                'span',
+	                                { className: 'value' },
+	                                this.props.sampleHeight,
+	                                'px'
+	                            )
+	                        ),
+	                        _react2.default.createElement('br', null),
+	                        _react2.default.createElement(
+	                            'span',
+	                            { className: 'property' },
+	                            'Plane Size: ',
+	                            _react2.default.createElement(
+	                                'span',
+	                                { className: 'value' },
+	                                this.state.planeWidth.toFixed(2),
+	                                ' x ',
+	                                this.state.planeHeight.toFixed(2)
+	                            )
+	                        )
+	                    )
 	                )
 	            );
 	        }
@@ -29898,7 +29953,8 @@
 
 	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_face_shader2.default);
 
-	var cameraBase = 1;
+	var CAMERA_BASE = 1;
+	var INITIAL_PLANE_SIZE = 0.8;
 
 	/**
 	 * Create a plane from 4 points.
@@ -29952,7 +30008,7 @@
 	        this._uiScene = new _three2.default.Scene();
 
 	        this.initRenderer(canvas);
-	        this.initCamera(cameraBase, cameraBase);
+	        this.initCamera(CAMERA_BASE, CAMERA_BASE);
 	        this.initControls(canvas);
 	        new ResizeSensor(this._container, this.onResize.bind(this));
 	        this.onResize();
@@ -30038,10 +30094,10 @@
 	            this._renderer.setSize(width, height);
 
 	            var aspect = width / height;
-	            this._camera.left = -cameraBase * aspect;
-	            this._camera.right = cameraBase * aspect;
-	            this._camera.top = cameraBase;
-	            this._camera.bottom = -cameraBase;
+	            this._camera.left = -CAMERA_BASE * aspect;
+	            this._camera.right = CAMERA_BASE * aspect;
+	            this._camera.top = CAMERA_BASE;
+	            this._camera.bottom = -CAMERA_BASE;
 	            this._camera.updateProjectionMatrix();
 	        }
 	    }, {
@@ -30060,7 +30116,7 @@
 	                alphaTest: 0.5
 	            });
 
-	            var size = 0.80;
+	            var size = INITIAL_PLANE_SIZE;
 	            var p1 = new _three2.default.Vector3(-size, size, 0);
 	            var p2 = new _three2.default.Vector3(size, size, 0);
 	            var p3 = new _three2.default.Vector3(size, -size, 0);
@@ -30261,6 +30317,7 @@
 	            if (!plane.material.map.image || plane.material.map.image.width !== sampleWidth || plane.material.map.image.height !== sampleHeight) {
 	                var texture = (0, _create_image_data2.default)(sampleWidth, sampleHeight);
 	                plane.material.map.image = texture;
+	                plane.material.map.minFilter = _three2.default.NearestFilter;
 	            }
 
 	            var imageBuffer = plane.material.map.image.data;
@@ -30276,7 +30333,7 @@
 
 	            plane.material.map.needsUpdate = true;
 
-	            this._delegate(plane.material.map.image);
+	            this._delegate.onSampleDidChange(plane.material.map.image);
 	        }
 
 	        /**
@@ -30557,6 +30614,7 @@
 	        value: function update() {
 	            this._controls.update();
 	            this._transformControls.update();
+	            this._checkPlaneDidChange();
 
 	            if (!this._cube) return;
 
@@ -30576,6 +30634,27 @@
 	            this._renderer.render(this._scene, this._camera);
 	            this._renderer.clearDepth();
 	            this._renderer.render(this._uiScene, this._camera);
+	        }
+
+	        /**
+	         * See if the sample plane's dimensions have changed
+	         */
+
+	    }, {
+	        key: '_checkPlaneDidChange',
+	        value: function _checkPlaneDidChange() {
+	            var oldPlaneWidth = this._planeWidth;
+	            var oldPlaneHeight = this._planeHeight;
+
+	            var width = INITIAL_PLANE_SIZE * 2 * this._plane.scale.x;
+	            var height = INITIAL_PLANE_SIZE * 2 * this._plane.scale.y;
+
+	            if (oldPlaneWidth !== width || oldPlaneHeight !== height) {
+	                this._delegate.onPlaneDidChange(width, height);
+	            }
+
+	            this._planeWidth = width;
+	            this._planeHeight = height;
 	        }
 	    }]);
 
