@@ -29729,7 +29729,7 @@
 	        value: function toggleGuides() {
 	            var shouldShow = !this.state.showingGuides;
 	            this.setState({ showingGuides: shouldShow });
-	            this._renderer.showGuides(showingGuides);
+	            this._renderer.showGuides(shouldShow);
 	        }
 	    }, {
 	        key: 'render',
@@ -29812,7 +29812,7 @@
 	                        ),
 	                        _react2.default.createElement(
 	                            'button',
-	                            { onClick: this.showingGuides.bind(this) },
+	                            { onClick: this.toggleGuides.bind(this) },
 	                            this.state.showingGuides ? 'Hide Guides' : 'Show Guides'
 	                        )
 	                    ),
@@ -29913,6 +29913,16 @@
 	    mesh.name = name;
 	    mesh.geometry.vertices = [a, b, c, d];
 	    return mesh;
+	};
+
+	/**
+	 * Helper to  create a texture from image data.
+	 */
+	var createTextureFromImageData = function createTextureFromImageData(imageData) {
+	    var text = new _three2.default.Texture(imageData);
+	    text.minFilter = _three2.default.NearestFilter;
+	    text.needsUpdate = true;
+	    return text;
 	};
 
 	/**
@@ -30043,23 +30053,34 @@
 	            });
 
 	            var size = 0.80;
-	            this._plane = createPlane('plane', new _three2.default.Vector3(-size, size, 0), new _three2.default.Vector3(size, size, 0), new _three2.default.Vector3(size, -size, 0), new _three2.default.Vector3(-size, -size, 0), material);
+	            var p1 = new _three2.default.Vector3(-size, size, 0);
+	            var p2 = new _three2.default.Vector3(size, size, 0);
+	            var p3 = new _three2.default.Vector3(size, -size, 0);
+	            var p4 = new _three2.default.Vector3(-size, -size, 0);
+
+	            this._plane = createPlane('plane', p1, p2, p3, p4, material);
 
 	            this._plane.geometry.attributes.uv.array = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
 	            this._plane.geometry.attributes.uv.needsUpdate = true;
-
-	            var edges = new _three2.default.EdgesHelper(this._plane, '#333333');
-	            this._scene.add(edges);
-	            this._scene.add(this._plane);
 	            this.resetPlane();
-
 	            this._transformControls.attach(this._plane);
+	            this._scene.add(this._plane);
 
+	            this._planeGuides = new _three2.default.Object3D();
+	            this._plane.add(this._planeGuides);
+
+	            // Create outline
+	            var outlineGeomtry = new _three2.default.Geometry();
+	            outlineGeomtry.vertices.push(p1, p2, p3, p4, p1);
+	            var outlineMaterial = new _three2.default.LineBasicMaterial({ color: 0x444444 });
+	            this._planeGuides.add(new _three2.default.Line(outlineGeomtry, outlineMaterial));
+
+	            // create marker for top left of plane
 	            var topLeftMarkerGeometry = new _three2.default.BoxGeometry(0.05, 0.05, 0.05);
 	            var topLeftMarkerMaterial = new _three2.default.MeshBasicMaterial({ color: 0xcccccc });
 	            var topLeftMarker = new _three2.default.Mesh(topLeftMarkerGeometry, topLeftMarkerMaterial);
 
-	            this._plane.add(topLeftMarker);
+	            this._planeGuides.add(topLeftMarker);
 	            topLeftMarker.translateX(-size);
 	            topLeftMarker.translateY(size);
 	        }
@@ -30071,6 +30092,7 @@
 
 	            var axis = [{ color: 0xff0000, vector: new _three2.default.Vector3(size, 0, 0) }, { color: 0x00ff00, vector: new _three2.default.Vector3(0, size, 0) }, { color: 0x0000ff, vector: new _three2.default.Vector3(0, 0, -size) }];
 
+	            this._axis = new _three2.default.Object3D();
 	            var _iteratorNormalCompletion = true;
 	            var _didIteratorError = false;
 	            var _iteratorError = undefined;
@@ -30083,7 +30105,7 @@
 	                    var geometry = new _three2.default.Geometry();
 	                    geometry.vertices.push(origin, new _three2.default.Vector3().addVectors(origin, a.vector));
 
-	                    this._scene.add(new _three2.default.Line(geometry, material));
+	                    this._axis.add(new _three2.default.Line(geometry, material));
 	                }
 	            } catch (err) {
 	                _didIteratorError = true;
@@ -30099,6 +30121,8 @@
 	                    }
 	                }
 	            }
+
+	            this._scene.add(this._axis);
 	        }
 
 	        /**
@@ -30187,7 +30211,11 @@
 
 	    }, {
 	        key: 'showGuides',
-	        value: function showGuides(shouldShowGuides) {}
+	        value: function showGuides(shouldShowGuides) {
+	            this._axis.visible = shouldShowGuides;
+	            this._planeGuides.visible = shouldShowGuides;
+	            this._cubeOutline.visible = shouldShowGuides;
+	        }
 
 	        /**
 	         * Remove all objects from the current scene.
@@ -30280,10 +30308,10 @@
 	            var u = Math.floor(x / width * this._data.width);
 	            var v = Math.floor(y / height * this._data.height);
 
-	            var index = (v * this._data.width + u) * 4;
-	            dest[destIndex++] = frameData[index++];
-	            dest[destIndex++] = frameData[index++];
-	            dest[destIndex++] = frameData[index++];
+	            var sampleIndex = (v * this._data.width + u) * 4;
+	            dest[destIndex++] = frameData[sampleIndex++];
+	            dest[destIndex++] = frameData[sampleIndex++];
+	            dest[destIndex++] = frameData[sampleIndex++];
 	            dest[destIndex++] = 255;
 	        }
 
@@ -30315,7 +30343,6 @@
 	            var faces = this._getFaceImages(imageData);
 
 	            this._cube = new _three2.default.Object3D();
-
 	            this._cube.add(createPlane('front', new _three2.default.Vector3(-w, -h, d), new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, h, d), new _three2.default.Vector3(-w, h, d), faces.front));
 
 	            this._cube.add(createPlane('right', new _three2.default.Vector3(w, -h, d), new _three2.default.Vector3(w, -h, -d), new _three2.default.Vector3(w, h, -d), new _three2.default.Vector3(w, h, d), faces.right));
@@ -30331,6 +30358,7 @@
 	            this._scene.add(this._cube);
 
 	            // Create outlines
+	            this._cubeOutline = new _three2.default.Object3D();
 	            var _iteratorNormalCompletion2 = true;
 	            var _didIteratorError2 = false;
 	            var _iteratorError2 = undefined;
@@ -30340,7 +30368,7 @@
 	                    var child = _step2.value;
 
 	                    var edges = new _three2.default.EdgesHelper(child, '#cccccc');
-	                    this._cube.add(edges);
+	                    this._cubeOutline.add(edges);
 	                }
 	            } catch (err) {
 	                _didIteratorError2 = true;
@@ -30357,6 +30385,9 @@
 	                }
 	            }
 
+	            this._cube.add(this._cubeOutline);
+
+	            // Create gray inner volume
 	            var g2 = new _three2.default.BoxGeometry(this._imageCube.width - 0.01, this._imageCube.height - 0.01, this._imageCube.depth - 0.01);
 	            var mat = new _three2.default.ShaderMaterial(_cube_volume_shader2.default);
 	            mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
@@ -30372,14 +30403,6 @@
 	            this._sampleWidth = width;
 	            this._sampleHeight = height;
 	            this._needsSlice = true;
-	        }
-	    }, {
-	        key: 'texFromFrame',
-	        value: function texFromFrame(frame) {
-	            var text = new _three2.default.Texture(frame);
-	            text.minFilter = _three2.default.NearestFilter;
-	            text.needsUpdate = true;
-	            return text;
 	        }
 	    }, {
 	        key: 'sample',
@@ -30472,8 +30495,6 @@
 	    }, {
 	        key: '_getFaceImages',
 	        value: function _getFaceImages(imageData) {
-	            var _this7 = this;
-
 	            var images = {
 	                front: this._frontImage(imageData),
 	                right: this._rightImage(imageData),
@@ -30485,7 +30506,7 @@
 
 	            return Object.keys(images).reduce(function (out, name) {
 	                var mat = cubeMaterial.clone();
-	                mat.uniforms.tDiffuse.value = _this7.texFromFrame(images[name]);
+	                mat.uniforms.tDiffuse.value = createTextureFromImageData(images[name]);
 	                mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
 	                out[name] = mat;
 	                return out;
@@ -30499,7 +30520,7 @@
 	    }, {
 	        key: 'animateImpl',
 	        value: function animateImpl() {
-	            var _this8 = this;
+	            var _this7 = this;
 
 	            requestAnimationFrame(this.animate);
 
@@ -30510,7 +30531,7 @@
 	            //this._plane.rotateY(0.002);
 	            //this._needsSlice = true;
 	            this._slicer = this._slicer || (0, _lodash2.default)(function () {
-	                return _this8.slice(_this8._data);
+	                return _this7.slice(_this7._data);
 	            }, 50);
 
 	            if (this._needsSlice) {
@@ -30518,6 +30539,11 @@
 	                this._needsSlice = false;
 	            }
 	        }
+
+	        /**
+	         * 
+	         */
+
 	    }, {
 	        key: 'update',
 	        value: function update() {
@@ -30527,10 +30553,7 @@
 	            if (!this._cube) return;
 
 	            var clippingPlane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0).applyMatrix4(this._plane.matrix);
-	            cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
-	            cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
-	            cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
-	            cubeMaterial.uniforms.clippingPlane.value.w = -clippingPlane.constant;
+	            cubeMaterial.uniforms.clippingPlane.value.set(clippingPlane.normal.x, clippingPlane.normal.y, clippingPlane.normal.z, -clippingPlane.constant);
 	            cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
 	        }
 

@@ -63,7 +63,7 @@ export default class GifRenderer extends React.Component {
     toggleGuides() {
         const shouldShow = !this.state.showingGuides;
         this.setState({ showingGuides: shouldShow });
-        this._renderer.showGuides(showingGuides);
+        this._renderer.showGuides(shouldShow);
     }
 
     render() {
@@ -84,7 +84,7 @@ export default class GifRenderer extends React.Component {
 
                         <button onClick={() => this._renderer.resetPlane()}>Reset Plane</button>
                         <button onClick={this.toggleControls.bind(this)}>{this.state.showingControls ? 'Hide Controls' : 'Show Controls'}</button>
-                        <button onClick={this.showingGuides.bind(this)}>{this.state.showingGuides ? 'Hide Guides' : 'Show Guides'}</button>
+                        <button onClick={this.toggleGuides.bind(this)}>{this.state.showingGuides ? 'Hide Guides' : 'Show Guides'}</button>
                     </div>
                     
                     <canvas className="three-canvas" />

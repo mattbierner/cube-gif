@@ -47,6 +47,16 @@ const createPlane = (name, a, b, c, d, mat) => {
     return mesh;
 };
 
+/**
+ * Helper to  create a texture from image data.
+ */
+const createTextureFromImageData = (imageData) => {
+    const text = new THREE.Texture(imageData);
+    text.minFilter = THREE.NearestFilter;
+    text.needsUpdate = true;
+    return text;
+};
+
 
 /**
  * 
@@ -153,10 +163,12 @@ export default class CubeRenderer {
         });
 
         const size = 0.80;
-        this._plane = createPlane('plane',
-            new THREE.Vector3(-size, size, 0), new THREE.Vector3(size, size, 0),
-            new THREE.Vector3(size, -size, 0), new THREE.Vector3(-size, -size, 0),
-            material);
+        const p1 = new THREE.Vector3(-size, size, 0);
+        const p2 = new THREE.Vector3(size, size, 0);
+        const p3 = new THREE.Vector3(size, -size, 0);
+        const p4 = new THREE.Vector3(-size, -size, 0);
+
+        this._plane = createPlane('plane', p1, p2, p3, p4, material);
 
         this._plane.geometry.attributes.uv.array = new Float32Array([
             0, 1,
@@ -165,19 +177,25 @@ export default class CubeRenderer {
             0, 0,
         ]);
         this._plane.geometry.attributes.uv.needsUpdate = true;
-
-        const edges = new THREE.EdgesHelper(this._plane, '#333333');
-        this._scene.add(edges);
-        this._scene.add(this._plane);
         this.resetPlane();
-
         this._transformControls.attach(this._plane);
+        this._scene.add(this._plane);
 
+        this._planeGuides = new THREE.Object3D();
+        this._plane.add(this._planeGuides);
+
+        // Create outline
+        const outlineGeomtry = new THREE.Geometry();
+        outlineGeomtry.vertices.push(p1, p2, p3, p4, p1);
+        const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x444444 });
+        this._planeGuides.add(new THREE.Line(outlineGeomtry, outlineMaterial));
+
+        // create marker for top left of plane
         const topLeftMarkerGeometry = new THREE.BoxGeometry(0.05, 0.05, 0.05);
         const topLeftMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
         const topLeftMarker = new THREE.Mesh(topLeftMarkerGeometry, topLeftMarkerMaterial);
 
-        this._plane.add(topLeftMarker);
+        this._planeGuides.add(topLeftMarker);
         topLeftMarker.translateX(-size);
         topLeftMarker.translateY(size);
     }
@@ -191,13 +209,15 @@ export default class CubeRenderer {
             { color: 0x00ff00, vector: new THREE.Vector3(0, size, 0) },
             { color: 0x0000ff, vector: new THREE.Vector3(0, 0, -size) }];
 
+        this._axis = new THREE.Object3D();
         for (const a of axis) {
             const material = new THREE.LineBasicMaterial({ color: a.color });
             const geometry = new THREE.Geometry();
             geometry.vertices.push(origin, new THREE.Vector3().addVectors(origin, a.vector));
 
-            this._scene.add(new THREE.Line(geometry, material));
+            this._axis.add(new THREE.Line(geometry, material));
         }
+        this._scene.add(this._axis);
     }
 
     /**
@@ -263,7 +283,9 @@ export default class CubeRenderer {
      * 
      */
     showGuides(shouldShowGuides) {
-        
+        this._axis.visible = shouldShowGuides;
+        this._planeGuides.visible = shouldShowGuides;
+        this._cubeOutline.visible = shouldShowGuides;
     }
 
     /**
@@ -345,10 +367,10 @@ export default class CubeRenderer {
         const u = Math.floor(x / width * this._data.width);
         const v = Math.floor(y / height * this._data.height);
 
-        let index = (v * this._data.width + u) * 4;
-        dest[destIndex++] = frameData[index++];
-        dest[destIndex++] = frameData[index++];
-        dest[destIndex++] = frameData[index++];
+        let sampleIndex = (v * this._data.width + u) * 4;
+        dest[destIndex++] = frameData[sampleIndex++];
+        dest[destIndex++] = frameData[sampleIndex++];
+        dest[destIndex++] = frameData[sampleIndex++];
         dest[destIndex++] = 255;
     }
 
@@ -377,7 +399,6 @@ export default class CubeRenderer {
         const faces = this._getFaceImages(imageData);
 
         this._cube = new THREE.Object3D();
-
         this._cube.add(
             createPlane('front',
                 new THREE.Vector3(-w, -h, d), new THREE.Vector3(w, -h, d), new THREE.Vector3(w, h, d), new THREE.Vector3(-w, h, d),
@@ -411,11 +432,14 @@ export default class CubeRenderer {
         this._scene.add(this._cube);
 
         // Create outlines
+        this._cubeOutline = new THREE.Object3D();
         for (const child of this._cube.children.slice()) {
             const edges = new THREE.EdgesHelper(child, '#cccccc');
-            this._cube.add(edges);
+            this._cubeOutline.add(edges);
         }
+        this._cube.add(this._cubeOutline);
 
+        // Create gray inner volume
         const g2 = new THREE.BoxGeometry(this._imageCube.width - 0.01, this._imageCube.height - 0.01, this._imageCube.depth - 0.01);
         const mat = new THREE.ShaderMaterial(cubeVolumeShader);
         mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
@@ -430,13 +454,6 @@ export default class CubeRenderer {
         this._sampleWidth = width;
         this._sampleHeight = height;
         this._needsSlice = true;
-    }
-
-    texFromFrame(frame) {
-        const text = new THREE.Texture(frame);
-        text.minFilter = THREE.NearestFilter;
-        text.needsUpdate = true;
-        return text;
     }
 
     sample(frame, x, y) {
@@ -533,7 +550,7 @@ export default class CubeRenderer {
 
         return Object.keys(images).reduce((out, name) => {
             const mat = cubeMaterial.clone();
-            mat.uniforms.tDiffuse.value = this.texFromFrame(images[name]);
+            mat.uniforms.tDiffuse.value = createTextureFromImageData(images[name]);
             mat.uniforms.clippingPlane = cubeMaterial.uniforms.clippingPlane;
             out[name] = mat;
             return out;
@@ -560,6 +577,9 @@ export default class CubeRenderer {
         }
     }
 
+    /**
+     * 
+     */
     update() {
         this._controls.update();
         this._transformControls.update();
@@ -568,10 +588,11 @@ export default class CubeRenderer {
             return;
 
         const clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0).applyMatrix4(this._plane.matrix);
-        cubeMaterial.uniforms.clippingPlane.value.x = clippingPlane.normal.x;
-        cubeMaterial.uniforms.clippingPlane.value.y = clippingPlane.normal.y;
-        cubeMaterial.uniforms.clippingPlane.value.z = clippingPlane.normal.z;
-        cubeMaterial.uniforms.clippingPlane.value.w = -clippingPlane.constant;
+        cubeMaterial.uniforms.clippingPlane.value.set(
+            clippingPlane.normal.x,
+            clippingPlane.normal.y,
+            clippingPlane.normal.z,
+            -clippingPlane.constant);
         cubeMaterial.uniforms.clippingPlane.needsUpdate = true;
     }
 
