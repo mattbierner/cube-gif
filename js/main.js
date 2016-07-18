@@ -28474,15 +28474,15 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _labeled_slider = __webpack_require__(225);
+	var _labeled_slider = __webpack_require__(209);
 
 	var _labeled_slider2 = _interopRequireDefault(_labeled_slider);
 
-	var _load_gif = __webpack_require__(209);
+	var _load_gif = __webpack_require__(210);
 
 	var _load_gif2 = _interopRequireDefault(_load_gif);
 
-	var _gif_renderer = __webpack_require__(212);
+	var _gif_renderer = __webpack_require__(213);
 
 	var _gif_renderer2 = _interopRequireDefault(_gif_renderer);
 
@@ -28622,13 +28622,101 @@
 	    value: true
 	});
 
-	var _create_image_data = __webpack_require__(210);
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactDom = __webpack_require__(33);
+
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * Number slider with a title and description of values.
+	 */
+
+	var LabeledRange = function (_React$Component) {
+	    _inherits(LabeledRange, _React$Component);
+
+	    function LabeledRange() {
+	        _classCallCheck(this, LabeledRange);
+
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(LabeledRange).apply(this, arguments));
+	    }
+
+	    _createClass(LabeledRange, [{
+	        key: 'onChange',
+	        value: function onChange(e) {
+	            this.props.onChange(e.target.value);
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var title = this.props.title ? _react2.default.createElement(
+	                'div',
+	                { className: 'control-title' },
+	                this.props.title
+	            ) : '';
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'control-group labeled-slider ' + (this.props.className || '') },
+	                title,
+	                _react2.default.createElement('input', { className: 'slider',
+	                    type: 'range',
+	                    min: this.props.min,
+	                    max: this.props.max,
+	                    value: this.props.value,
+	                    onChange: this.onChange.bind(this) }),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'min label' },
+	                    this.props.min
+	                ),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'max label' },
+	                    this.props.max
+	                ),
+	                _react2.default.createElement(
+	                    'span',
+	                    { className: 'value label' },
+	                    this.props.value + (this.props.units || '')
+	                )
+	            );
+	        }
+	    }]);
+
+	    return LabeledRange;
+	}(_react2.default.Component);
+
+	exports.default = LabeledRange;
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _create_image_data = __webpack_require__(211);
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var omggif = __webpack_require__(211);
+	var omggif = __webpack_require__(212);
 
 
 	/**
@@ -28697,7 +28785,7 @@
 	};
 
 /***/ },
-/* 210 */
+/* 211 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -28734,7 +28822,7 @@
 	}();
 
 /***/ },
-/* 211 */
+/* 212 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -29531,7 +29619,7 @@
 	} catch (e) {} // CommonJS.
 
 /***/ },
-/* 212 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29550,7 +29638,7 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _d_renderer = __webpack_require__(213);
+	var _d_renderer = __webpack_require__(214);
 
 	var _d_renderer2 = _interopRequireDefault(_d_renderer);
 
@@ -29568,10 +29656,16 @@
 	var GifRenderer = function (_React$Component) {
 	    _inherits(GifRenderer, _React$Component);
 
-	    function GifRenderer() {
+	    function GifRenderer(props) {
 	        _classCallCheck(this, GifRenderer);
 
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(GifRenderer).apply(this, arguments));
+	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(GifRenderer).call(this, props));
+
+	        _this.state = {
+	            showingControls: true,
+	            showingGuides: true
+	        };
+	        return _this;
 	    }
 
 	    _createClass(GifRenderer, [{
@@ -29613,19 +29707,35 @@
 	            this._2dCanvas.height = imageData.height;
 	            this._ctx.putImageData(imageData, 0, 0);
 	        }
+
+	        /**
+	         * Show or hide the controls.
+	         */
+
 	    }, {
-	        key: 'resetCamera',
-	        value: function resetCamera() {
-	            this._renderer.resetCamera();
+	        key: 'toggleControls',
+	        value: function toggleControls() {
+	            var shouldShow = !this.state.showingControls;
+	            this.setState({ showingControls: shouldShow });
+	            this._renderer.showControls(shouldShow);
 	        }
+
+	        /**
+	         * Toggle UI.
+	         */
+
 	    }, {
-	        key: 'resetPlane',
-	        value: function resetPlane() {
-	            this._renderer.resetPlane();
+	        key: 'toggleGuides',
+	        value: function toggleGuides() {
+	            var shouldShow = !this.state.showingGuides;
+	            this.setState({ showingGuides: shouldShow });
+	            this._renderer.showGuides(showingGuides);
 	        }
 	    }, {
 	        key: 'render',
 	        value: function render() {
+	            var _this2 = this;
+
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'gif-renderer' },
@@ -29634,16 +29744,76 @@
 	                    { className: 'three-container' },
 	                    _react2.default.createElement(
 	                        'div',
-	                        { className: 'three-view-controls' },
+	                        { className: 'three-controls three-view-controls' },
 	                        _react2.default.createElement(
 	                            'button',
-	                            { onClick: this.resetCamera.bind(this) },
-	                            'Reset Camera'
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.goToFrontView();
+	                                } },
+	                            'Front'
 	                        ),
 	                        _react2.default.createElement(
 	                            'button',
-	                            { onClick: this.resetPlane.bind(this) },
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.goToSideView();
+	                                } },
+	                            'Side'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.goToTopView();
+	                                } },
+	                            'Top'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.resetCamera();
+	                                } },
+	                            'Reset Camera'
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'three-controls three-obj-controls' },
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.setTransformMode('translate');
+	                                } },
+	                            'Translate (w)'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.setTransformMode('rotate');
+	                                } },
+	                            'Rotate (e)'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.setTransformMode('scale');
+	                                } },
+	                            'Scale (r)'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: function onClick() {
+	                                    return _this2._renderer.resetPlane();
+	                                } },
 	                            'Reset Plane'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: this.toggleControls.bind(this) },
+	                            this.state.showingControls ? 'Hide Controls' : 'Show Controls'
+	                        ),
+	                        _react2.default.createElement(
+	                            'button',
+	                            { onClick: this.showingGuides.bind(this) },
+	                            this.state.showingGuides ? 'Hide Guides' : 'Show Guides'
 	                        )
 	                    ),
 	                    _react2.default.createElement('canvas', { className: 'three-canvas' })
@@ -29669,7 +29839,7 @@
 	;
 
 /***/ },
-/* 213 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29680,35 +29850,35 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _three = __webpack_require__(214);
+	var _three = __webpack_require__(215);
 
 	var _three2 = _interopRequireDefault(_three);
 
-	var _OrbitControls = __webpack_require__(215);
+	var _OrbitControls = __webpack_require__(216);
 
 	var _OrbitControls2 = _interopRequireDefault(_OrbitControls);
 
-	var _TransformControls = __webpack_require__(216);
+	var _TransformControls = __webpack_require__(217);
 
 	var _TransformControls2 = _interopRequireDefault(_TransformControls);
 
-	var _lodash = __webpack_require__(217);
+	var _lodash = __webpack_require__(218);
 
 	var _lodash2 = _interopRequireDefault(_lodash);
 
-	var _gen_array = __webpack_require__(219);
+	var _gen_array = __webpack_require__(220);
 
 	var _gen_array2 = _interopRequireDefault(_gen_array);
 
-	var _create_image_data = __webpack_require__(210);
+	var _create_image_data = __webpack_require__(211);
 
 	var _create_image_data2 = _interopRequireDefault(_create_image_data);
 
-	var _cube_face_shader = __webpack_require__(223);
+	var _cube_face_shader = __webpack_require__(221);
 
 	var _cube_face_shader2 = _interopRequireDefault(_cube_face_shader);
 
-	var _cube_volume_shader = __webpack_require__(224);
+	var _cube_volume_shader = __webpack_require__(222);
 
 	var _cube_volume_shader2 = _interopRequireDefault(_cube_volume_shader);
 
@@ -29716,7 +29886,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var ResizeSensor = __webpack_require__(221);
+	var ResizeSensor = __webpack_require__(223);
 
 	var cubeMaterial = new _three2.default.ShaderMaterial(_cube_face_shader2.default);
 
@@ -29938,10 +30108,43 @@
 	    }, {
 	        key: 'resetCamera',
 	        value: function resetCamera() {
-	            this._camera.position.z = 1;
-	            this._camera.position.x = 1;
-	            this._camera.position.y = 1;
+	            this._camera.position.set(1, 1, 1);
 	        }
+
+	        /**
+	         * Switch to default front view.
+	         */
+
+	    }, {
+	        key: 'goToFrontView',
+	        value: function goToFrontView() {
+	            this._camera.position.set(0, 0, 1.5);
+	        }
+
+	        /**
+	         * Switch to default side view.
+	         */
+
+	    }, {
+	        key: 'goToSideView',
+	        value: function goToSideView() {
+	            this._camera.position.set(1.5, 0, 0);
+	        }
+
+	        /**
+	         * Siwtch to default top view.
+	         */
+
+	    }, {
+	        key: 'goToTopView',
+	        value: function goToTopView() {
+	            this._camera.position.set(0, 1.5, 0);
+	        }
+
+	        /**
+	         * Resets the sampling plane to its original position and size.
+	         */
+
 	    }, {
 	        key: 'resetPlane',
 	        value: function resetPlane() {
@@ -29952,6 +30155,39 @@
 	            this._plane.rotateOnAxis(new _three2.default.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
 	            this._needsSlice = true;
 	        }
+
+	        /**
+	         * Turn the transform controls on or off.
+	         */
+
+	    }, {
+	        key: 'showControls',
+	        value: function showControls(shouldShowControls) {
+	            if (shouldShowControls) {
+	                this._transformControls.attach(this._plane);
+	            } else {
+	                this._transformControls.detach();
+	            }
+	        }
+
+	        /**
+	         * Show the transform control mode
+	         */
+
+	    }, {
+	        key: 'setTransformMode',
+	        value: function setTransformMode(mode) {
+	            this.showControls(true);
+	            this._transformControls.setMode(mode);
+	        }
+
+	        /**
+	         * 
+	         */
+
+	    }, {
+	        key: 'showGuides',
+	        value: function showGuides(shouldShowGuides) {}
 
 	        /**
 	         * Remove all objects from the current scene.
@@ -30318,7 +30554,7 @@
 	exports.default = CubeRenderer;
 
 /***/ },
-/* 214 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;'use strict';// File:src/Three.js
@@ -33605,7 +33841,7 @@
 	var numFrames=this.geometry.morphTargets.length;var name="__default";var startFrame=0;var endFrame=numFrames-1;var fps=numFrames/1;this.createAnimation(name,startFrame,endFrame,fps);this.setAnimationWeight(name,1);};THREE.MorphBlendMesh.prototype=Object.create(THREE.Mesh.prototype);THREE.MorphBlendMesh.prototype.constructor=THREE.MorphBlendMesh;THREE.MorphBlendMesh.prototype.createAnimation=function(name,start,end,fps){var animation={start:start,end:end,length:end-start+1,fps:fps,duration:(end-start)/fps,lastFrame:0,currentFrame:0,active:false,time:0,direction:1,weight:1,directionBackwards:false,mirroredLoop:false};this.animationsMap[name]=animation;this.animationsList.push(animation);};THREE.MorphBlendMesh.prototype.autoCreateAnimations=function(fps){var pattern=/([a-z]+)_?(\d+)/i;var firstAnimation,frameRanges={};var geometry=this.geometry;for(var i=0,il=geometry.morphTargets.length;i<il;i++){var morph=geometry.morphTargets[i];var chunks=morph.name.match(pattern);if(chunks&&chunks.length>1){var name=chunks[1];if(!frameRanges[name])frameRanges[name]={start:Infinity,end:-Infinity};var range=frameRanges[name];if(i<range.start)range.start=i;if(i>range.end)range.end=i;if(!firstAnimation)firstAnimation=name;}}for(var name in frameRanges){var range=frameRanges[name];this.createAnimation(name,range.start,range.end,fps);}this.firstAnimation=firstAnimation;};THREE.MorphBlendMesh.prototype.setAnimationDirectionForward=function(name){var animation=this.animationsMap[name];if(animation){animation.direction=1;animation.directionBackwards=false;}};THREE.MorphBlendMesh.prototype.setAnimationDirectionBackward=function(name){var animation=this.animationsMap[name];if(animation){animation.direction=-1;animation.directionBackwards=true;}};THREE.MorphBlendMesh.prototype.setAnimationFPS=function(name,fps){var animation=this.animationsMap[name];if(animation){animation.fps=fps;animation.duration=(animation.end-animation.start)/animation.fps;}};THREE.MorphBlendMesh.prototype.setAnimationDuration=function(name,duration){var animation=this.animationsMap[name];if(animation){animation.duration=duration;animation.fps=(animation.end-animation.start)/animation.duration;}};THREE.MorphBlendMesh.prototype.setAnimationWeight=function(name,weight){var animation=this.animationsMap[name];if(animation){animation.weight=weight;}};THREE.MorphBlendMesh.prototype.setAnimationTime=function(name,time){var animation=this.animationsMap[name];if(animation){animation.time=time;}};THREE.MorphBlendMesh.prototype.getAnimationTime=function(name){var time=0;var animation=this.animationsMap[name];if(animation){time=animation.time;}return time;};THREE.MorphBlendMesh.prototype.getAnimationDuration=function(name){var duration=-1;var animation=this.animationsMap[name];if(animation){duration=animation.duration;}return duration;};THREE.MorphBlendMesh.prototype.playAnimation=function(name){var animation=this.animationsMap[name];if(animation){animation.time=0;animation.active=true;}else{console.warn("THREE.MorphBlendMesh: animation["+name+"] undefined in .playAnimation()");}};THREE.MorphBlendMesh.prototype.stopAnimation=function(name){var animation=this.animationsMap[name];if(animation){animation.active=false;}};THREE.MorphBlendMesh.prototype.update=function(delta){for(var i=0,il=this.animationsList.length;i<il;i++){var animation=this.animationsList[i];if(!animation.active)continue;var frameTime=animation.duration/animation.length;animation.time+=animation.direction*delta;if(animation.mirroredLoop){if(animation.time>animation.duration||animation.time<0){animation.direction*=-1;if(animation.time>animation.duration){animation.time=animation.duration;animation.directionBackwards=true;}if(animation.time<0){animation.time=0;animation.directionBackwards=false;}}}else{animation.time=animation.time%animation.duration;if(animation.time<0)animation.time+=animation.duration;}var keyframe=animation.start+THREE.Math.clamp(Math.floor(animation.time/frameTime),0,animation.length-1);var weight=animation.weight;if(keyframe!==animation.currentFrame){this.morphTargetInfluences[animation.lastFrame]=0;this.morphTargetInfluences[animation.currentFrame]=1*weight;this.morphTargetInfluences[keyframe]=0;animation.lastFrame=animation.currentFrame;animation.currentFrame=keyframe;}var mix=animation.time%frameTime/frameTime;if(animation.directionBackwards)mix=1-mix;if(animation.currentFrame!==animation.lastFrame){this.morphTargetInfluences[animation.currentFrame]=mix*weight;this.morphTargetInfluences[animation.lastFrame]=(1-mix)*weight;}else{this.morphTargetInfluences[animation.currentFrame]=weight;}}};
 
 /***/ },
-/* 215 */
+/* 216 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33614,7 +33850,7 @@
 		value: true
 	});
 
-	var _three = __webpack_require__(214);
+	var _three = __webpack_require__(215);
 
 	var _three2 = _interopRequireDefault(_three);
 
@@ -34576,7 +34812,7 @@
 	});
 
 /***/ },
-/* 216 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34585,7 +34821,7 @@
 		value: true
 	});
 
-	var _three = __webpack_require__(214);
+	var _three = __webpack_require__(215);
 
 	var _three2 = _interopRequireDefault(_three);
 
@@ -35580,7 +35816,7 @@
 	      */
 
 /***/ },
-/* 217 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35595,7 +35831,7 @@
 	 * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var debounce = __webpack_require__(218);
+	var debounce = __webpack_require__(219);
 
 	/** Used as the `TypeError` message for "Functions" methods. */
 	var FUNC_ERROR_TEXT = 'Expected a function';
@@ -35689,7 +35925,7 @@
 	module.exports = throttle;
 
 /***/ },
-/* 218 */
+/* 219 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -36088,7 +36324,7 @@
 	module.exports = debounce;
 
 /***/ },
-/* 219 */
+/* 220 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -36109,8 +36345,63 @@
 	};
 
 /***/ },
-/* 220 */,
 /* 221 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(215);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
+	        tDiffuse: { type: 't' }
+	    },
+	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
+	};
+
+/***/ },
+/* 222 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _three = __webpack_require__(215);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	/**
+	 * Shader for the interior of the gif cube.
+	 */
+	exports.default = {
+	    uniforms: {
+	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) }
+	    },
+	    vertexShader: '\n        varying vec3 eyePos;\n\n        void main() {\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
+	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n\n            vec4 color = vec4(0.9, 0.9, 0.9, 1.0);\n            gl_FragColor = color;\n        }\n    ',
+	    side: _three2.default.DoubleSide,
+	    transparent: true
+	};
+
+/***/ },
+/* 223 */
 /***/ function(module, exports) {
 
 	/*** IMPORTS FROM imports-loader ***/
@@ -36284,151 +36575,6 @@
 	    }
 	})();
 	}.call(window));
-
-/***/ },
-/* 222 */,
-/* 223 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _three = __webpack_require__(214);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = {
-	    uniforms: {
-	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) },
-	        tDiffuse: { type: 't' }
-	    },
-	    vertexShader: '\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            vUv = uv;\n\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
-	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec2 vUv;\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n            vec4 color = texture2D(tDiffuse, vUv);\n\n            gl_FragColor = color;\n        }\n    ',
-	    side: _three2.default.DoubleSide,
-	    transparent: true
-	};
-
-/***/ },
-/* 224 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _three = __webpack_require__(214);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	/**
-	 * Shader for the interior of the gif cube.
-	 */
-	exports.default = {
-	    uniforms: {
-	        clippingPlane: { type: 'v4', value: new _three2.default.Vector4(0, 0, 0, 0) }
-	    },
-	    vertexShader: '\n        varying vec3 eyePos;\n\n        void main() {\n            vec4 pos = modelViewMatrix * vec4(position, 1.0); \n            gl_Position = projectionMatrix * pos;\n            eyePos = position; \n        }\n    ',
-	    fragmentShader: '\n        uniform sampler2D tDiffuse;\n        uniform vec4 clippingPlane;\n\n        varying vec3 eyePos;\n\n        void main() {\n            if (dot(eyePos, clippingPlane.xyz) > clippingPlane.w)\n                discard;\n\n            vec4 color = vec4(0.9, 0.9, 0.9, 1.0);\n            gl_FragColor = color;\n        }\n    ',
-	    side: _three2.default.DoubleSide,
-	    transparent: true
-	};
-
-/***/ },
-/* 225 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _react = __webpack_require__(1);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var _reactDom = __webpack_require__(33);
-
-	var _reactDom2 = _interopRequireDefault(_reactDom);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	/**
-	 * Number slider with a title and description of values.
-	 */
-
-	var LabeledRange = function (_React$Component) {
-	    _inherits(LabeledRange, _React$Component);
-
-	    function LabeledRange() {
-	        _classCallCheck(this, LabeledRange);
-
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(LabeledRange).apply(this, arguments));
-	    }
-
-	    _createClass(LabeledRange, [{
-	        key: 'onChange',
-	        value: function onChange(e) {
-	            this.props.onChange(e.target.value);
-	        }
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	            var title = this.props.title ? _react2.default.createElement(
-	                'div',
-	                { className: 'control-title' },
-	                this.props.title
-	            ) : '';
-	            return _react2.default.createElement(
-	                'div',
-	                { className: 'control-group labeled-slider ' + (this.props.className || '') },
-	                title,
-	                _react2.default.createElement('input', { className: 'slider',
-	                    type: 'range',
-	                    min: this.props.min,
-	                    max: this.props.max,
-	                    value: this.props.value,
-	                    onChange: this.onChange.bind(this) }),
-	                _react2.default.createElement(
-	                    'span',
-	                    { className: 'min label' },
-	                    this.props.min
-	                ),
-	                _react2.default.createElement(
-	                    'span',
-	                    { className: 'max label' },
-	                    this.props.max
-	                ),
-	                _react2.default.createElement(
-	                    'span',
-	                    { className: 'value label' },
-	                    this.props.value + (this.props.units || '')
-	                )
-	            );
-	        }
-	    }]);
-
-	    return LabeledRange;
-	}(_react2.default.Component);
-
-	exports.default = LabeledRange;
 
 /***/ }
 /******/ ]);

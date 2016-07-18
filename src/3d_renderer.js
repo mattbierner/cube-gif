@@ -204,11 +204,33 @@ export default class CubeRenderer {
      * Set the camera to its original position
      */
     resetCamera() {
-        this._camera.position.z = 1;
-        this._camera.position.x = 1;
-        this._camera.position.y = 1;
+        this._camera.position.set(1, 1, 1);
     }
 
+    /**
+     * Switch to default front view.
+     */
+    goToFrontView() {
+        this._camera.position.set(0, 0, 1.5);
+    }
+
+    /**
+     * Switch to default side view.
+     */
+    goToSideView() {
+        this._camera.position.set(1.5, 0, 0);
+    }
+
+    /**
+     * Siwtch to default top view.
+     */
+    goToTopView() {
+        this._camera.position.set(0, 1.5, 0);
+    }
+
+    /**
+     * Resets the sampling plane to its original position and size.
+     */
     resetPlane() {
         this._plane.scale.set(1, 1, 1);
         this._plane.position.set(0, 0, 0);
@@ -216,6 +238,32 @@ export default class CubeRenderer {
         this._plane.updateMatrix();
         this._plane.rotateOnAxis(new THREE.Vector3(-1, 0, 0).normalize(), Math.PI / 4);
         this._needsSlice = true;
+    }
+
+    /**
+     * Turn the transform controls on or off.
+     */
+    showControls(shouldShowControls) {
+        if (shouldShowControls) {
+            this._transformControls.attach(this._plane);
+        } else {
+            this._transformControls.detach();
+        }
+    }
+
+    /**
+     * Show the transform control mode
+     */
+    setTransformMode(mode) {
+        this.showControls(true);
+        this._transformControls.setMode(mode);
+    }
+
+    /**
+     * 
+     */
+    showGuides(shouldShowGuides) {
+        
     }
 
     /**

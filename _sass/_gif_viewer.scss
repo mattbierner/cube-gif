@@ -16,9 +16,44 @@
 }
 
 .three-container {
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+    
+
     canvas {
         width: 100% !important;
         max-height: 100vh;
+    }
+
+    .three-controls {
+        border: 1px solid $text-color;
+        background: rgba(255, 255, 255, 0.85);
+        button {
+            display: block;
+            
+            float: left;
+            font-size: 10px;
+            padding: 4px 8px;
+            border: none;
+            border-right: 1px solid $text-color
+        }
+
+        button:last-child {
+            border-right: none;
+        }
+    }
+
+    .three-view-controls {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+
+     .three-obj-controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
     }
 }
 
