@@ -1,5 +1,3 @@
-# WIP
-
 <div align="center">
     <div><img src="https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/cube.gif" /></div>
     <h2 align="center">cube.gif</h2>
