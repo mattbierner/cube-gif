@@ -75,7 +75,7 @@ The buttons in the top left corner switch between the standard camera views.
 ## Slicing Plane Movement
 The slicing plane can be freely moved about to explore the data. 
 
-Translation moves the slicing plane. Use the `W` key or the `Translate` button to switch to translation mode. Note that if you move the slice plane off the cube, those areas of the slice are colored in gray and are not included in the output slice image.
+Translation moves the slicing plane. Use the `W` key or the `Translate` button to switch to translation mode. Note that when you move the slice plane off the cube, areas outside the slice are colored gray and are not included in the output slice image.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/slice-translation.gif)
 
@@ -87,9 +87,9 @@ Scaling adjusts the size of the sample plane.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/slice-scale.gif)
 
-To understand how scaling works, imagine the slicing plane is a grid ten by ten color sensors, like a camera. Normally, all the sensors in the grid are evenly spaced apart. But when we scale the plane, we adjust the distance between each of these sensors. Scale the plane's width in half, and we still have 10 sensors in each row, but now the distance between all of them is cut in half and we end up being able to detect more detail.
+To understand how scaling works, imagine the slicing plane is a ten by ten grid of color sensors, like a super low res camera sensor. Normally, all the sensors in the grid are evenly spaced apart. But when we scale the plane, we adjust the distance between each of these sensors. Scale the plane's width in half, and we still have 10 sensors in each row, but now the distance between all of them is cut in half and we end up being able to detect more detail horizontal because we are sampling points closer together.
 
-Scaling also interacts with `Sample Width` and `Sample Height`. Scale determines the size of the image sensor plane, while `Sample Width` and `Sample Height` determine the number of columns and rows of sensors respectively on this plane. This offers a lot of control over the output image, but can also be confusing. To avoid distortion, make sure that the aspect ratio of the plane matches the aspect ratio of the sampling.
+Scaling also interacts with `Sample Width` and `Sample Height`. Scale determines the size of the image sensor plane, while `Sample Width` and `Sample Height` determine the number of columns and rows of sensors on this plane. Combined, this offers a lot of control over the output image, but can also be somewhat confusing. To avoid distortion, make sure that the aspect ratio of the plane matches the aspect ratio of the sampling.
 
 
 ## Sample Size
