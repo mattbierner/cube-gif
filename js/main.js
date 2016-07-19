@@ -30253,7 +30253,8 @@
 	    }, {
 	        key: '_setCameraPosition',
 	        value: function _setCameraPosition(x, y, z) {
-	            this._camera.position.set(0, 1.5, 0);
+	            if (this._controls) this._controls.reset();
+	            this._camera.position.set(x, y, z);
 	            this._camera.rotation.set(0, 0, 0, 0);
 	            this._camera.lookAt(new _three2.default.Vector3());
 	        }
@@ -30628,7 +30629,6 @@
 
 	                var oldMomentum = this._momentum;
 	                this._momentum += (this._plane.position.z > 0 ? -1 : 1) * this._delta;
-	                console.log(this._momentum, this._delta);
 
 	                this._plane.translateZ(this._momentum);
 	                this._needsSlice = true;
