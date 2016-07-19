@@ -45,15 +45,15 @@ And top view.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-top.png)
 
-
-Now, if we sample the gif cube at all points on this plane, we end up with a 2D image that has sampled multiple frames of the original animation.
+The sliced face is just another 2D surface, which we can than look at an image. Here's the slice image of the above slice.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-image.png)
 
-We can slice the gif cube at any angle like this to create interesting new 3D shapes and 2D slices
+This single image samples from multiple frames of the original animation, as well as multiple positions within each frame. 
+
+We can slice the gif cube at any angle like this to create interesting new 3D shapes and 2D slice images.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/slice-angled.gif)
-
 
 
 # Usage
@@ -61,7 +61,7 @@ We can slice the gif cube at any angle like this to create interesting new 3D sh
 ## Camera Movement
 Click and drag anywhere outside the cube to rotate the camera about. Use the mouse-wheel to zoom in and out, and hold the right mouse button to pan about.
 
-The buttons in the top left corner of the view allow you to go to one of the standard camera views.
+The buttons in the top left corner switch between the standard camera views.
 
 ## Guides
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/guides.png)
