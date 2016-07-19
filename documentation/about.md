@@ -10,7 +10,7 @@ Consider a 12 frame gif that fades from red to blue, where the top right corner 
 
 Each image already has 2 spatial dimensions: x and y for pixel coordinates. The third dimension of the data is time.
 
-To encode time as a spatial dimension, imaging creating a 1x1x1 cube and drawing the first frame of the animation on the front face of the cube. Now start extruding the pixels of this front face backwards to create a volume. After moving 1/12 of way through the cube, start sampling from the next frame of the animation. Continue this process through the entire cube. This produces a 3D volume of pixel data, 1/12 for each frame of the animation.
+To encode time as a spatial dimension, imagine creating a 1x1x1 cube and drawing the first frame of the animation on the front face of the cube. Now start extruding the pixels of this front face backwards to create a volume. After moving 1/12 of way through the cube, start sampling from the next frame of the animation. Continue this process through the entire cube. This produces a 3D volume of pixel data, 1/12 for each frame of the animation.
 
 Here's what that cube looks like for the above gif.
 
