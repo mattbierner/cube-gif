@@ -7,7 +7,8 @@
 * [Site][site]
 * [Documentation][documentation]
 
-*[cube.gif](site)* is an experiment visualizing gifs as 3D volumes and taking 2D slices of these volumes. This encodes animation time as another spatial dimension, that we can then project back into two dimensions to create images that capture multiple frames of the original animation.
+*[cube.gif][site]* is an experiment visualizing gifs as 3D volumes and taking 2D slices of these volumes. This encodes animation time as another spatial dimension. We can then slice the gif cube using a plane, projecting the data back into two dimensions and producing images that capture multiple frames of the original animation.
+
 
 The above image shows one of these gif cubes. The front left face is the first frame of the gif. Points on the front face of the cube map directly to pixels in the original gif's first frame. The third dimension forwards or backwards from the front face is time. This means that the left face capture the right most pixels of the gif over time. 
 

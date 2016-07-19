@@ -1,6 +1,6 @@
 # About cube.gif
 
-*[cube.gif](site)* is an experiment visualizing gifs as 3D volumes and taking 2D slices of these volumes. This encodes animation time as another spatial dimension, that we can then project back into two dimensions to create images that capture multiple frames of the original animation.
+*[cube.gif][site]* is an experiment visualizing gifs as 3D volumes and taking 2D slices of these volumes. This encodes animation time as another spatial dimension. We can then slice the gif cube using a plane, projecting the data back into two dimensions and producing images that capture multiple frames of the original animation.
 
 
 # Concept
@@ -45,7 +45,7 @@ And top view.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-top.png)
 
-The sliced face is just another 2D surface, which we can than look at an image. Here's the slice image of the above slice.
+The sliced face is just another 2D surface, which we can than look at an image. Here's the image produced by the shown slice.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-image.png)
 
@@ -111,3 +111,4 @@ You can also adjust the width and height separately to get different aspect rati
 
 
 
+[site]: https://mattbierner.github.io/cube-gif/
