@@ -85,7 +85,7 @@
 	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Main).call(this, props));
 
 	        _this.state = {
-	            selectedGif: "./images/example-start.gif"
+	            selectedGif: "./images/initial.gif"
 	        };
 	        return _this;
 	    }
@@ -29870,22 +29870,27 @@
 	                        _react2.default.createElement(
 	                            'span',
 	                            { className: 'property' },
-	                            'Sample Width: ',
+	                            'Sample Size: ',
 	                            _react2.default.createElement(
 	                                'span',
 	                                { className: 'value' },
 	                                this.props.sampleWidth,
+	                                ' x ',
+	                                this.props.sampleHeight,
 	                                'px'
 	                            )
 	                        ),
+	                        _react2.default.createElement('br', null),
 	                        _react2.default.createElement(
 	                            'span',
 	                            { className: 'property' },
-	                            'Sample Height: ',
+	                            'Gif Size: ',
 	                            _react2.default.createElement(
 	                                'span',
 	                                { className: 'value' },
-	                                this.props.sampleHeight,
+	                                this.props.imageData ? this.props.imageData.width : 0,
+	                                ' x ',
+	                                this.props.imageData ? this.props.imageData.height : 0,
 	                                'px'
 	                            )
 	                        ),

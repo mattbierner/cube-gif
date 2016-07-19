@@ -85,7 +85,7 @@ export default class GifRenderer extends React.Component {
     exportSlice() {
         if (!this._2dCanvas)
             return;
-        
+
         const url = this._2dCanvas.toDataURL("image/png");
         window.open(url);
     }
@@ -120,14 +120,15 @@ export default class GifRenderer extends React.Component {
                     <h2>Slice</h2>
                     <canvas className="slice-canvas" width="200" height="200" />
                     <div className="slice-properties">
-                        <span className="property">Sample Width: <span className="value">{this.props.sampleWidth}px</span></span>
-                        <span className="property">Sample Height: <span className="value">{this.props.sampleHeight}px</span></span>
+                        <span className="property">Sample Size: <span className="value">{this.props.sampleWidth} x {this.props.sampleHeight}px</span></span>
                         <br />
-                        <span className="property">Plane Size: <span className="value">{this.state.planeWidth.toFixed(2)} x {this.state.planeHeight.toFixed(2)}</span></span>
+                        <span className="property">Gif Size: <span className="value">{this.props.imageData ? this.props.imageData.width : 0} x {this.props.imageData ? this.props.imageData.height : 0}px</span></span>
+                        <br />
+                        <span className="property">Plane Size: <span className="value">{this.state.planeWidth.toFixed(2) } x {this.state.planeHeight.toFixed(2) }</span></span>
                     </div>
 
                     <div className="export-controls">
-                        <button onClick={this.exportSlice.bind(this)}>Export Image</button>
+                        <button onClick={this.exportSlice.bind(this) }>Export Image</button>
                     </div>
                 </div>
             </div>
