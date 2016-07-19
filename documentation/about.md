@@ -1,7 +1,6 @@
 # About cube.gif
 
-*[cube.gif][site]* is an experiment visualizing gifs as 3D volumes and taking 2D slices of these volumes. This encodes animation time as another spatial dimension. We can then slice the gif cube using a plane, projecting the data back into two dimensions and producing images that capture multiple frames of the original animation.
-
+*[cube.gif][site]* is an experiment visualizing gifs as 3D cubes by encoding animation time as another spatial dimension. We can then slice the gif cube using a plane, projecting the data back into two dimensions and producing images that capture multiple frames of the original animation.
 
 # Concept
 Consider a 12 frame gif that fades from red to blue, where the top right corner of each frame is a solid color and the bottom left corner is white.
@@ -10,7 +9,7 @@ Consider a 12 frame gif that fades from red to blue, where the top right corner 
 
 Each image already has 2 spatial dimensions: x and y for pixel coordinates. The third dimension of the data is time.
 
-To encode time as a spatial dimension, imagine creating a 1x1x1 cube and drawing the first frame of the animation on the front face of the cube. Now start extruding the pixels of this front face backwards to create a volume. After moving 1/12 of way through the cube, start sampling from the next frame of the animation. Continue this process through the entire cube. This produces a 3D volume of pixel data, 1/12 for each frame of the animation.
+To encode time as another spatial dimension, imagine creating a 1x1x1 cube and drawing the first frame of the animation on the front face of the cube. Now extrude the pixels of the front face to create a volume. After moving 1/12th of way through the cube, start sampling from the next frame of the animation. Continue this process through the entire cube. This produces a 3D volume of pixel data, 1/12 for each frame of the animation.
 
 Here's what that cube looks like for the above gif.
 
@@ -45,7 +44,7 @@ And top view.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-top.png)
 
-The sliced face is just another 2D surface, which we can than look at an image. Here's the image produced by the shown slice.
+The face of the slice is just another surface, which we can view as an image. Here's the image produced by the shown slice.
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-image.png)
 
