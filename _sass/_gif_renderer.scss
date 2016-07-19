@@ -71,6 +71,7 @@
     justify-content: center;
     padding: 0.8em 0.2em;
     text-align: center;
+    height: 80vh;
 
     h2 {
         margin-bottom: 0;
@@ -80,6 +81,7 @@
         width: 100% !important;
         height: auto !important;
         border: 1px solid $text-color;
+        max-height: 100% !important;
     }
 
     .slice-properties {
@@ -114,6 +116,8 @@
 
         .slice-container {
             width: 50%;
+            height: auto;
+            max-height: 70vh;
         }
     }
 }

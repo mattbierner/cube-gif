@@ -28,7 +28,6 @@ While the top of the cube shows the top row of pixels for each frame in the anim
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-top.png)
 
-
 ## Slicing
 These gif cubes are pretty cool, but things get even more interesting if we then project the cube back into two dimensions. To do this, imagine a plane slicing through the cube.
 
@@ -53,6 +52,15 @@ Now, if we sample the gif cube at all points on this plane, we end up with a 2D 
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/cube-slice-image.png)
 
-We can slice the gif cube at any angle like this to create interesting new 
+We can slice the gif cube at any angle like this to create interesting new 3D shapes and 2D slices
 
 ![](https://raw.githubusercontent.com/mattbierner/cube-gif/gh-pages/documentation/images/slice-angled.png)
+
+
+# Controls
+
+## Camera Movement
+Click and drag anywhere outside the cube to rotate the camera about. Use the mousewheel to zoom in and out, and hold the right mouse button to pan about.
+
+The buttons in the top left corner of the view allow you to go to one of the standard camera views.
+
